@@ -1,0 +1,187 @@
+version: "3.9"
+
+services:
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    container_name: vipasx_mssql_container
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Express"
+      SA_PASSWORD: "Tpsy@z09!"
+      COLLATION: "Turkish_100_CS_AI_KS_WS_SC_UTF8"
+    ports:
+      - "1433:1433"
+    networks:
+      - sorte
+    volumes:
+      - mssqlsystem:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Tpsy@z09!' -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: vipasx_rabbitmq
+    restart: unless-stopped
+    command: >
+      bash -c "rabbitmq-plugins enable --offline rabbitmq_mqtt &&
+               rabbitmq-server"
+    environment:
+      TZ: "Europe/Istanbul"
+      RABBITMQ_DEFAULT_USER: "sorte"
+      RABBITMQ_DEFAULT_PASS: "tpsy@z2023!"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - sorte
+    volumes:
+      - rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # emqx:
+  #   image: emqx/emqx:latest
+  #   container_name: sorte_emqx
+  #   restart: unless-stopped
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   environment:
+  #     EMQX_NAME: "sorte-emqx"
+  #     EMQX_HOST: "sorte-emqx"
+  #     EMQX_DASHBOARD__DEFAULT_USERNAME: "admin"
+  #     EMQX_DASHBOARD__DEFAULT_PASSWORD: "Tpsy@z09!"
+  #     EMQX_ALLOW_ANONYMOUS: "false"
+  #     EMQX_AUTH__MQTT__ENABLE: "true"
+  #     EMQX_MQTT__DEFAULT__USERNAME: "drony"
+  #     EMQX_MQTT__DEFAULT__PASSWORD: "drony"
+  #     EMQX_MQTT__MAX_PACKET_SIZE: "10MB"
+  #     EMQX_MQTT__MAX_INFLIGHT_MESSAGES: "10000"
+  #     EMQX_MQTT__MAX_SUBSCRIPTIONS: "100000"
+  #     EMQX_LISTENER__TCP__EXTERNAL__BIND: "0.0.0.0:1883"
+  #     EMQX_LISTENER__WS__DEFAULT__BIND: "0.0.0.0:8083"
+  #     EMQX_DASHBOARD__LISTENERS__HTTP__BIND: "0.0.0.0:18083"
+  #     EMQX_LOG__CONSOLE__LEVEL: "error"
+
+  #   ports:
+  #     - "1883:1883"
+  #     - "8083:8083"
+  #     - "8084:8084"
+  #     - "8883:8883"
+  #     - "18083:18083"
+  #   networks:
+  #     - sorte
+  #   volumes:
+  #     - vol-emqx-data:/opt/emqx/data
+  #     - vol-emqx-etc:/opt/emqx/etc
+  #     - vol-emqx-log:/opt/emqx/log
+
+  sortebuilder:
+    image: registry.docker.bakelor.com/apps/sortebuilder:latest
+    container_name: sorte_builder
+    restart: always
+    ports:
+      - 10003:10003
+    networks:
+      - sorte
+    volumes:
+      - vipasx_vol:/app/content
+    environment:
+      - REGISTRY_AUTH=htpasswd
+      - REGISTRY_AUTH_HTPASSWD_REALM=Registry
+      - REGISTRY_AUTH_HTPASSWD_PATH=/bakelor/spRFcL63P
+      - VIRTUAL_HOST=vipasx.web.local
+      - ASPNETCORE_URLS=http://+:10003
+      - VIRTUAL_PORT=10003
+      - ConnectionStrings:SqlServer=Server=167.235.228.15;Database=VipasXDb2025;user id=sa;pwd=Tpsy@z09!;MultipleActiveResultSets=true;TrustServerCertificate=True;
+      - app:TenantId=39E0BB03-49EA-403A-A2FA-76346B3B1AF9
+      - JwtSettings:Issuer=sorte
+      - JwtSettings:ExpirationMinutes=1440
+      - JwtSettings:Audience=sorte
+      - JwtSettings:ValidIssuer=sorte
+      - JwtSettings:ValidAudience=sorte
+      - JwtSettings:ValidateAudience=true
+      - JwtSettings:ValidateIssuer=true
+      - JwtSettings:ValidateLifetime=true
+      - JwtSettings:Expiry=08.00:00:00
+      - JwtSettings:Subject=VipasX
+      - JwtSettings:Secretkey=64A63153-11C1-4919-9133-EFAF99A9B456
+      - RabbitMQ:Host=167.235.228.15
+      - RabbitMQ:Port=5672
+      - RabbitMQ:Username=sorte
+      - RabbitMQ:Password=tpsy@z2023!
+      - RabbitMQ:VirtualHost=/
+      - RabbitMQ:Queues:Default:Durable=true
+      - RabbitMQ:Queues:Default:Exclusive=false
+      - RabbitMQ:Queues:Default:AutoDelete= false
+      - RabbitMQ:Queues:DeadLetter:Durable=true
+      - RabbitMQ:Queues:DeadLetter:Exclusive=false
+      - RabbitMQ:Queues:DeadLetter:AutoDelete=false
+      - app:MqttQualityOfServiceLevel=AtMostOnce
+      - app:DefaultTimezone=UTC+3
+      - app:SendMailAt=06:00:00- app:PhotoDirectory=content/photos
+      - app:ExcelDirectory=content/excel
+      - app:AccessTokenExpirationMinutes=1440
+      - app:RefreshTokenExpirationMinutes=1430
+      - app:rabbitMQ.enabled=true
+      - app:rabbitMQ.tenantId=sorte
+      - app:rabbitMQ.connectionString=host=(local);port=5672;virtualHost=/;username=rabbitmquser;password=tpsy@z22!  
+
+  sorte_designer_studio:
+    image: registry.docker.bakelor.com/apps/sorte-designer-studio:latest
+    container_name: sorte_designer_studio
+    restart: always
+    ports:
+      - 10002:10002
+    networks:
+      - sorte
+    volumes:
+      - sorte_designer_studio_vol:/app/Contents/Data 
+    environment:
+      - REGISTRY_AUTH=htpasswd
+      - REGISTRY_AUTH_HTPASSWD_REALM=Registry
+      - REGISTRY_AUTH_HTPASSWD_PATH=/bakelor/spRFcL63P
+      - VIRTUAL_HOST=vipasx_events
+      - ASPNETCORE_URLS=http://+:10002
+      - VIRTUAL_PORT=10002
+      - ConnectionStrings:DefaultConnection=Filename=./Contents/Data/sorteDesignStudio.db;
+      - RabbitMQ:Host=localhost
+      - RabbitMQ:Port=5672
+      - RabbitMQ:Username=tps
+      - RabbitMQ:Password=tpsy@z2023!
+      - RabbitMQ:VirtualHost=/
+      - RabbitMQ:Queues:Default:Durable=true
+      - RabbitMQ:Queues:Default:Exclusive=false
+      - RabbitMQ:Queues:Default:AutoDelete= false
+      - RabbitMQ:Queues:DeadLetter:Durable=true
+      - RabbitMQ:Queues:DeadLetter:Exclusive=false
+      - RabbitMQ:Queues:DeadLetter:AutoDelete=false 
+      - app:WaitingTime=2 
+      - app:RefreshTimeIntervalInMinutes=2
+      - app:DataFetchIntervalInMinutes=180 
+
+networks:
+  sorte:
+    driver: bridge
+
+volumes:
+  mssqlsystem:
+  rabbitmq:
+  # vol-emqx-data:
+  # vol-emqx-etc:
+  # vol-emqx-log:
+  sorte_vol:
+    driver: local
+  sorte_designer_studio_vol:
+    driver: local
+  

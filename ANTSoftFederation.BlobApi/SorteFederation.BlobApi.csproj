@@ -1,0 +1,105 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>3b159bec-6e77-4cfc-bdfd-ea9f20b31aa6</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ContainerPort Include="11009" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.13" />
+		<PackageReference Include="Microsoft.Extensions.AI" Version="10.11.0" />
+		<PackageReference Include="Scalar.AspNetCore" Version="2.18.2" />
+
+		<PackageReference Include="Aspire.Hosting.AppHost" Version="13.6.2" />
+		<PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.6.3" />
+		<PackageReference Include="Aspire.Hosting.RabbitMQ" Version="13.6.3" />
+		<PackageReference Include="Aspire.RabbitMQ.Client" Version="13.6.3" />
+		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.6.3" />
+		<PackageReference Include="Aspire.StackExchange.Redis.OutputCaching" Version="13.6.3" />
+		<PackageReference Include="Aspire.Hosting.Redis" Version="13.6.3" />
+		<PackageReference Include="Aspire.Hosting.Qdrant" Version="13.6.3" />
+
+		<PackageReference Include="CommunityToolkit.Aspire.OllamaSharp" Version="13.6.0" />
+		<PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.13" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.13" />
+
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.13" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.13" />
+
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.13" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.13" />
+
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.13">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+
+		<PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="10.0.13" />
+
+		<PackageVersion Include="VaultSharp" Version="1.17.5.1" />
+		<PackageVersion Include="VaultSharp.Extensions.Configuration" Version="1.0.5" />
+
+		<PackageReference Include="EntityFrameworkCore.Data.AutoHistory" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Http.Polly" Version="10.0.13" />
+
+		<PackageReference Include="Npgsql" Version="10.0.3" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+		<PackageReference Include="MySql.EntityFrameworkCore" Version="10.0.12" />
+
+		<PackageReference Include="Pgvector" Version="0.3.2" />
+		<PackageReference Include="Pgvector.EntityFrameworkCore" Version="0.3.0" />
+		<PackageReference Include="Microsoft.Extensions.VectorData.Abstractions" Version="10.11.0" />
+
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
+
+		<PackageReference Include="Asp.Versioning.Http" Version="10.2.3" />
+		<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.2.1" />
+		<PackageReference Include="PdfPig" Version="0.1.16" />
+
+		<PackageReference Include="Figgle" Version="0.6.6" />
+		<PackageReference Include="Figgle.Fonts" Version="0.6.6" />
+		<!--
+		<PackageReference Include="SixLabors.ImageSharp" Version="4.0.0" />
+		<PackageReference Include="SixLabors.ImageSharp.Web" Version="4.0.0" />
+		<PackageReference Include="SkiaSharp" Version="3.119.4" />
+		<PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.4" />
+		-->
+
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ANTSoftFederation.GlobalEnums\SorteFederation.GlobalEnums.csproj" />
+		<ProjectReference Include="..\ANTSoftFederation.Logger\SorteFederation.Logger.csproj" />
+		<ProjectReference Include="..\ANTSoftFederation.Mediator\SortetFederation.Mediator.csproj" />
+		<ProjectReference Include="..\ANTSoftFederation.ServiceDefaults\SorteFederation.ServiceDefaults.csproj" />
+		<ProjectReference Include="..\ANTSoftFederation.Shared\SorteFederation.Shared.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="logs\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Contents\Applications\placeholder.txt">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Contents\Documents\placeholder.txt">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Contents\Images\placeholder.txt">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+</Project>

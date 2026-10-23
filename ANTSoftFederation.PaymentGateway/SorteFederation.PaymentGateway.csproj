@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ContainerPort Include="11005" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.13" />
+		<PackageReference Include="Scalar.AspNetCore" Version="2.18.2" />
+
+		<PackageReference Include="Aspire.StackExchange.Redis" Version="13.6.3" />
+		<PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="10.0.13" />
+
+		<PackageReference Include="Asp.Versioning.Http" Version="10.2.3" />
+		<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.2.1" />
+
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.13" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.13" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+
+		<PackageReference Include="Npgsql" Version="10.0.3" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.13" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.13" />
+
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.13">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+
+		<PackageReference Include="Figgle" Version="0.6.6" />
+		<PackageReference Include="Figgle.Fonts" Version="0.6.6" />
+
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ANTSoftFederation.EncryptEFCoreColumn\SorteFederation.EncryptEFCoreColumn.csproj" />
+		<ProjectReference Include="..\ANTSoftFederation.GlobalEnums\SorteFederation.GlobalEnums.csproj" />
+		<ProjectReference Include="..\ANTSoftFederation.KeyVault\SorteFederation.KeyVault.csproj" />
+		<ProjectReference Include="..\ANTSoftFederation.Logger\SorteFederation.Logger.csproj" />
+		<ProjectReference Include="..\ANTSoftFederation.Mediator\SortetFederation.Mediator.csproj" />
+		<ProjectReference Include="..\ANTSoftFederation.ServiceDefaults\SorteFederation.ServiceDefaults.csproj" />
+		<ProjectReference Include="..\ANTSoftFederation.Shared\SorteFederation.Shared.csproj" />
+	</ItemGroup>
+
+</Project>

@@ -1,0 +1,924 @@
+{
+  "resources": {
+    "postgres-user": {
+      "type": "parameter.v0",
+      "value": "{postgres-user.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "postgres-password": {
+      "type": "parameter.v0",
+      "value": "{postgres-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "jwt-signing-key": {
+      "type": "parameter.v0",
+      "value": "{jwt-signing-key.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "grafana-admin-user": {
+      "type": "parameter.v0",
+      "value": "{grafana-admin-user.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "grafana-admin-password": {
+      "type": "parameter.v0",
+      "value": "{grafana-admin-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "rabbitmq-user": {
+      "type": "parameter.v0",
+      "value": "{rabbitmq-user.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "rabbitmq-password": {
+      "type": "parameter.v0",
+      "value": "{rabbitmq-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "mailpit": {
+      "type": "container.v1",
+      "connectionString": "Endpoint=smtp://{mailpit.bindings.smtp.host}:{mailpit.bindings.smtp.port}",
+      "image": "docker.io/axllent/mailpit:v1.31.2",
+      "volumes": [
+        {
+          "name": "mailpit-data",
+          "target": "/data",
+          "readOnly": false
+        }
+      ],
+      "env": {
+        "MP_DATABASE": "/data/mailpit.db"
+      },
+      "bindings": {
+        "smtp": {
+          "scheme": "smtp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 1025
+        },
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 8025
+        }
+      }
+    },
+    "prometheus": {
+      "type": "container.v1",
+      "image": "prom/prometheus:latest",
+      "args": [
+        "--config.file=/etc/prometheus/prometheus.yml",
+        "--web.enable-otlp-receiver"
+      ],
+      "bindMounts": [
+        {
+          "source": "prometheus",
+          "target": "/etc/prometheus",
+          "readOnly": false
+        }
+      ],
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 9090
+        }
+      }
+    },
+    "grafana": {
+      "type": "container.v1",
+      "image": "grafana/grafana:latest",
+      "bindMounts": [
+        {
+          "source": "grafana/dashboards",
+          "target": "/var/lib/grafana/dashboards",
+          "readOnly": false
+        },
+        {
+          "source": "grafana/provisioning",
+          "target": "/etc/grafana/provisioning",
+          "readOnly": false
+        }
+      ],
+      "env": {
+        "GF_SECURITY_ADMIN_USER": "{grafana-admin-user.value}",
+        "GF_SECURITY_ADMIN_PASSWORD": "{grafana-admin-password.value}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 3000
+        }
+      }
+    },
+    "compose": {
+      "error": "This resource does not support generation in the manifest."
+    },
+    "cache": {
+      "type": "container.v1",
+      "connectionString": "{cache.bindings.tcp.host}:{cache.bindings.tcp.port},password={cache-password.value}{cond-cache-bindings-tcp-tlsenabled-3eddb73a.connectionString}",
+      "image": "docker.io/library/redis:8.6",
+      "entrypoint": "/bin/sh",
+      "args": [
+        "-c",
+        "redis-server --requirepass $REDIS_PASSWORD"
+      ],
+      "env": {
+        "REDIS_PASSWORD": "{cache-password.value}"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "redis",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 6379
+        }
+      }
+    },
+    "SorteMasterDatabase": {
+      "type": "container.v1",
+      "connectionString": "Host={SorteMasterDatabase.bindings.tcp.host};Port={SorteMasterDatabase.bindings.tcp.port};Username={postgres-user.value};Password={postgres-password.value}",
+      "image": "docker.io/pgvector/pgvector:pg17",
+      "volumes": [
+        {
+          "name": "sorte_masterdb_vol",
+          "target": "/var/lib/postgresql",
+          "readOnly": false
+        }
+      ],
+      "env": {
+        "POSTGRES_HOST_AUTH_METHOD": "scram-sha-256",
+        "POSTGRES_INITDB_ARGS": "--auth-host=scram-sha-256 --auth-local=scram-sha-256",
+        "POSTGRES_USER": "{postgres-user.value}",
+        "POSTGRES_PASSWORD": "{postgres-password.value}",
+        "TZ": "Europe/Turkey"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5432
+        }
+      }
+    },
+    "SortePortalDb2026": {
+      "type": "value.v0",
+      "connectionString": "{SorteMasterDatabase.connectionString};Database=SortePortalDb2026"
+    },
+    "SorteBuilderDb2026": {
+      "type": "value.v0",
+      "connectionString": "{SorteMasterDatabase.connectionString};Database=SorteBuilderDb2026"
+    },
+    "SorteBlob2026Db": {
+      "type": "value.v0",
+      "connectionString": "{SorteMasterDatabase.connectionString};Database=SorteBlob2026Db"
+    },
+    "sorte-rabbitmq": {
+      "type": "container.v1",
+      "connectionString": "amqp://{rabbitmq-user-uri-encoded.value}:{rabbitmq-password-uri-encoded.value}@{sorte-rabbitmq.bindings.tcp.host}:{sorte-rabbitmq.bindings.tcp.port}",
+      "image": "docker.io/library/rabbitmq:4.3-management",
+      "volumes": [
+        {
+          "name": "sorte-rabbitmq_vol",
+          "target": "/var/lib/rabbitmq",
+          "readOnly": false
+        }
+      ],
+      "env": {
+        "RABBITMQ_DEFAULT_USER": "{rabbitmq-user.value}",
+        "RABBITMQ_DEFAULT_PASS": "{rabbitmq-password.value}",
+        "TZ": "Europe/Turkey",
+        "RABBITMQ_DEFAULT_VHOST": "/",
+        "RABBITMQ_DEFAULT_PASSWORD": "{rabbitmq-password.value}"
+      },
+      "bindings": {
+        "tcp": {
+          "scheme": "tcp",
+          "protocol": "tcp",
+          "transport": "tcp",
+          "targetPort": 5672
+        },
+        "management": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 15672
+        }
+      }
+    },
+    "n8n-owner-email": {
+      "type": "parameter.v0",
+      "value": "{n8n-owner-email.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "n8n-owner-password-hash": {
+      "type": "parameter.v0",
+      "value": "{n8n-owner-password-hash.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "n8n-encryption-key": {
+      "type": "parameter.v0",
+      "value": "{n8n-encryption-key.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "n8n": {
+      "type": "container.v1",
+      "image": "n8nio/n8n:latest",
+      "bindMounts": [
+        {
+          "source": "n8n-data",
+          "target": "/home/node/.n8n",
+          "readOnly": false
+        }
+      ],
+      "env": {
+        "N8N_HOST": "0.0.0.0",
+        "N8N_PORT": "5678",
+        "WEBHOOK_URL": "http://localhost:5678/",
+        "N8N_METRICS": "true",
+        "N8N_ENCRYPTION_KEY": "{n8n-encryption-key.value}",
+        "N8N_INSTANCE_OWNER_MANAGED_BY_ENV": "true",
+        "N8N_INSTANCE_OWNER_EMAIL": "{n8n-owner-email.value}",
+        "N8N_INSTANCE_OWNER_PASSWORD_HASH": "{n8n-owner-password-hash.value}"
+      },
+      "bindings": {
+        "n8n-ui": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 5678
+        }
+      }
+    },
+    "portainer-agent-token": {
+      "type": "parameter.v0",
+      "value": "{portainer-agent-token.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true
+        }
+      }
+    },
+    "portainer": {
+      "type": "container.v1",
+      "image": "portainer/portainer-ce:lts",
+      "bindMounts": [
+        {
+          "source": "../../../../../var/run/docker.sock",
+          "target": "/var/run/docker.sock",
+          "readOnly": false
+        }
+      ],
+      "volumes": [
+        {
+          "name": "portainer_data",
+          "target": "/data",
+          "readOnly": false
+        }
+      ],
+      "bindings": {
+        "portainer-http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 9000
+        },
+        "portainer-https": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 9443
+        }
+      }
+    },
+    "sorte-portal-service": {
+      "type": "project.v1",
+      "path": "../ANTSoftFederation.Portal/SorteFederation.Portal.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "Kestrel__Endpoints__http__Url": "http://*:{sorte-portal-service.bindings.http.targetPort}",
+        "POSTGRES_HOST": "{SorteMasterDatabase.bindings.tcp.host}",
+        "POSTGRES_PORT": "{SorteMasterDatabase.bindings.tcp.port}",
+        "POSTGRES_USER": "{postgres-user.value}",
+        "POSTGRES_PASSWORD": "{postgres-password.value}",
+        "POSTGRES_DATABASE": "SortePortalDb2026",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Auth__Jwt__Issuer": "sorte.portal",
+        "Auth__Jwt__Audience": "sorte",
+        "Auth__Jwt__Key": "{jwt-signing-key.value}",
+        "JwtSettings__Issuer": "sorte.portal",
+        "JwtSettings__Audience": "sorte",
+        "JwtSettings__SecretKey": "{jwt-signing-key.value}",
+        "ConnectionStrings__SortePortalDb2026": "{SortePortalDb2026.connectionString}",
+        "SORTEPORTALDB2026_HOST": "{SorteMasterDatabase.bindings.tcp.host}",
+        "SORTEPORTALDB2026_PORT": "{SorteMasterDatabase.bindings.tcp.port}",
+        "SORTEPORTALDB2026_USERNAME": "{postgres-user.value}",
+        "SORTEPORTALDB2026_PASSWORD": "{postgres-password.value}",
+        "SORTEPORTALDB2026_URI": "postgresql://{postgres-user-uri-encoded.value}:{postgres-password-uri-encoded.value}@{SorteMasterDatabase.bindings.tcp.host}:{SorteMasterDatabase.bindings.tcp.port}/SortePortalDb2026",
+        "SORTEPORTALDB2026_JDBCCONNECTIONSTRING": "jdbc:postgresql://{SorteMasterDatabase.bindings.tcp.host}:{SorteMasterDatabase.bindings.tcp.port}/SortePortalDb2026",
+        "SORTEPORTALDB2026_DATABASENAME": "SortePortalDb2026",
+        "ConnectionStrings__cache": "{cache.connectionString}",
+        "CACHE_HOST": "{cache.bindings.tcp.host}",
+        "CACHE_PORT": "{cache.bindings.tcp.port}",
+        "CACHE_PASSWORD": "{cache-password.value}",
+        "CACHE_URI": "{cache.bindings.tcp.scheme}://:{cache-password-uri-encoded.value}@{cache.bindings.tcp.host}:{cache.bindings.tcp.port}",
+        "ConnectionStrings__sorte-rabbitmq": "{sorte-rabbitmq.connectionString}",
+        "ConnectionStrings__sorte_rabbitmq": "{sorte-rabbitmq.connectionString}",
+        "SORTE_RABBITMQ_HOST": "{sorte-rabbitmq.bindings.tcp.host}",
+        "SORTE_RABBITMQ_PORT": "{sorte-rabbitmq.bindings.tcp.port}",
+        "SORTE_RABBITMQ_USERNAME": "{rabbitmq-user.value}",
+        "SORTE_RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "SORTE_RABBITMQ_URI": "amqp://{rabbitmq-user-uri-encoded.value}:{rabbitmq-password-uri-encoded.value}@{sorte-rabbitmq.bindings.tcp.host}:{sorte-rabbitmq.bindings.tcp.port}",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "{compose-dashboard.bindings.otlp-grpc.url}",
+        "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+        "OTEL_SERVICE_NAME": "sorte-portal-service"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 11006,
+          "external": true
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 11006,
+          "external": true
+        }
+      }
+    },
+    "sorte-ollama": {
+      "type": "container.v1",
+      "connectionString": "Endpoint={sorte-ollama.bindings.http.scheme}://{sorte-ollama.bindings.http.host}:{sorte-ollama.bindings.http.port}",
+      "image": "docker.io/ollama/ollama:0.34.4",
+      "volumes": [
+        {
+          "name": "sortefederation.apphost-ddc79b5ce3-sorte-ollama-ollama",
+          "target": "/root/.ollama",
+          "readOnly": false
+        }
+      ],
+      "env": {
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "{compose-dashboard.bindings.otlp-grpc.url}",
+        "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+        "OTEL_SERVICE_NAME": "sorte-ollama"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 11434
+        }
+      }
+    },
+    "ollama-chat": {
+      "type": "value.v0",
+      "connectionString": "{sorte-ollama.connectionString};Model=qwen3:8b"
+    },
+    "ollama-embeddings": {
+      "type": "value.v0",
+      "connectionString": "{sorte-ollama.connectionString};Model=qwen3-embedding:0.6b"
+    },
+    "sorte-portal-builder": {
+      "type": "project.v1",
+      "path": "../ANTSoftFederation.Builders/SorteFederation.Builders.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "Kestrel__Endpoints__http__Url": "http://*:{sorte-portal-builder.bindings.http.targetPort}",
+        "POSTGRES_HOST": "{SorteMasterDatabase.bindings.tcp.host}",
+        "POSTGRES_PORT": "{SorteMasterDatabase.bindings.tcp.port}",
+        "POSTGRES_USER": "{postgres-user.value}",
+        "POSTGRES_PASSWORD": "{postgres-password.value}",
+        "POSTGRES_DATABASE": "SorteBuilderDb2026",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Auth__Jwt__Issuer": "sorte.portal",
+        "Auth__Jwt__Audience": "sorte",
+        "Auth__Jwt__Key": "{jwt-signing-key.value}",
+        "ConnectionStrings__SorteBuilderDb2026": "{SorteBuilderDb2026.connectionString}",
+        "SORTEBUILDERDB2026_HOST": "{SorteMasterDatabase.bindings.tcp.host}",
+        "SORTEBUILDERDB2026_PORT": "{SorteMasterDatabase.bindings.tcp.port}",
+        "SORTEBUILDERDB2026_USERNAME": "{postgres-user.value}",
+        "SORTEBUILDERDB2026_PASSWORD": "{postgres-password.value}",
+        "SORTEBUILDERDB2026_URI": "postgresql://{postgres-user-uri-encoded.value}:{postgres-password-uri-encoded.value}@{SorteMasterDatabase.bindings.tcp.host}:{SorteMasterDatabase.bindings.tcp.port}/SorteBuilderDb2026",
+        "SORTEBUILDERDB2026_JDBCCONNECTIONSTRING": "jdbc:postgresql://{SorteMasterDatabase.bindings.tcp.host}:{SorteMasterDatabase.bindings.tcp.port}/SorteBuilderDb2026",
+        "SORTEBUILDERDB2026_DATABASENAME": "SorteBuilderDb2026",
+        "ConnectionStrings__cache": "{cache.connectionString}",
+        "CACHE_HOST": "{cache.bindings.tcp.host}",
+        "CACHE_PORT": "{cache.bindings.tcp.port}",
+        "CACHE_PASSWORD": "{cache-password.value}",
+        "CACHE_URI": "{cache.bindings.tcp.scheme}://:{cache-password-uri-encoded.value}@{cache.bindings.tcp.host}:{cache.bindings.tcp.port}",
+        "ConnectionStrings__ollama-embeddings": "{ollama-embeddings.connectionString}",
+        "ConnectionStrings__ollama_embeddings": "{ollama-embeddings.connectionString}",
+        "OLLAMA_EMBEDDINGS_HOST": "{sorte-ollama.bindings.http.host}",
+        "OLLAMA_EMBEDDINGS_PORT": "{sorte-ollama.bindings.http.port}",
+        "OLLAMA_EMBEDDINGS_URI": "{sorte-ollama.bindings.http.scheme}://{sorte-ollama.bindings.http.host}:{sorte-ollama.bindings.http.port}",
+        "OLLAMA_EMBEDDINGS_MODEL": "qwen3-embedding:0.6b",
+        "ConnectionStrings__ollama-chat": "{ollama-chat.connectionString}",
+        "ConnectionStrings__ollama_chat": "{ollama-chat.connectionString}",
+        "OLLAMA_CHAT_HOST": "{sorte-ollama.bindings.http.host}",
+        "OLLAMA_CHAT_PORT": "{sorte-ollama.bindings.http.port}",
+        "OLLAMA_CHAT_URI": "{sorte-ollama.bindings.http.scheme}://{sorte-ollama.bindings.http.host}:{sorte-ollama.bindings.http.port}",
+        "OLLAMA_CHAT_MODEL": "qwen3:8b",
+        "ConnectionStrings__sorte-rabbitmq": "{sorte-rabbitmq.connectionString}",
+        "ConnectionStrings__sorte_rabbitmq": "{sorte-rabbitmq.connectionString}",
+        "SORTE_RABBITMQ_HOST": "{sorte-rabbitmq.bindings.tcp.host}",
+        "SORTE_RABBITMQ_PORT": "{sorte-rabbitmq.bindings.tcp.port}",
+        "SORTE_RABBITMQ_USERNAME": "{rabbitmq-user.value}",
+        "SORTE_RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "SORTE_RABBITMQ_URI": "amqp://{rabbitmq-user-uri-encoded.value}:{rabbitmq-password-uri-encoded.value}@{sorte-rabbitmq.bindings.tcp.host}:{sorte-rabbitmq.bindings.tcp.port}",
+        "N8N__BaseUrl": "{n8n.bindings.n8n-ui.url}",
+        "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT": "http://prometheus:9090/api/v1/otlp/v1/metrics",
+        "OTEL_EXPORTER_OTLP_METRICS_PROTOCOL": "http/protobuf",
+        "ConnectionStrings__mailpit": "{mailpit.connectionString}",
+        "MAILPIT_HOST": "{mailpit.bindings.smtp.host}",
+        "MAILPIT_PORT": "{mailpit.bindings.smtp.port}",
+        "MAILPIT_URI": "smtp://{mailpit.bindings.smtp.host}:{mailpit.bindings.smtp.port}",
+        "SORTE_BLOB_SERVICE_HTTP": "{sorte-blob-service.bindings.http.url}",
+        "services__sorte-blob-service__http__0": "{sorte-blob-service.bindings.http.url}",
+        "SORTE_BLOB_SERVICE_HTTPS": "{sorte-blob-service.bindings.https.url}",
+        "services__sorte-blob-service__https__0": "{sorte-blob-service.bindings.https.url}",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "{compose-dashboard.bindings.otlp-grpc.url}",
+        "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+        "OTEL_SERVICE_NAME": "sorte-portal-builder"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 11002,
+          "external": true
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 11002,
+          "external": true
+        }
+      }
+    },
+    "sorte-blob-service": {
+      "type": "project.v1",
+      "path": "../ANTSoftFederation.BlobApi/SorteFederation.BlobApi.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "Kestrel__Endpoints__http__Url": "http://*:{sorte-blob-service.bindings.http.targetPort}",
+        "POSTGRES_HOST": "{SorteMasterDatabase.bindings.tcp.host}",
+        "POSTGRES_PORT": "{SorteMasterDatabase.bindings.tcp.port}",
+        "POSTGRES_USER": "{postgres-user.value}",
+        "POSTGRES_PASSWORD": "{postgres-password.value}",
+        "POSTGRES_DATABASE": "SorteBlob2026Db",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Auth__Jwt__Issuer": "sorte.portal",
+        "Auth__Jwt__Audience": "sorte",
+        "Auth__Jwt__Key": "{jwt-signing-key.value}",
+        "BLOB_CONTENTS_PATH": "/Contents",
+        "ConnectionStrings__sorte-rabbitmq": "{sorte-rabbitmq.connectionString}",
+        "ConnectionStrings__sorte_rabbitmq": "{sorte-rabbitmq.connectionString}",
+        "SORTE_RABBITMQ_HOST": "{sorte-rabbitmq.bindings.tcp.host}",
+        "SORTE_RABBITMQ_PORT": "{sorte-rabbitmq.bindings.tcp.port}",
+        "SORTE_RABBITMQ_USERNAME": "{rabbitmq-user.value}",
+        "SORTE_RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "SORTE_RABBITMQ_URI": "amqp://{rabbitmq-user-uri-encoded.value}:{rabbitmq-password-uri-encoded.value}@{sorte-rabbitmq.bindings.tcp.host}:{sorte-rabbitmq.bindings.tcp.port}",
+        "ConnectionStrings__SorteBlob2026Db": "{SorteBlob2026Db.connectionString}",
+        "SORTEBLOB2026DB_HOST": "{SorteMasterDatabase.bindings.tcp.host}",
+        "SORTEBLOB2026DB_PORT": "{SorteMasterDatabase.bindings.tcp.port}",
+        "SORTEBLOB2026DB_USERNAME": "{postgres-user.value}",
+        "SORTEBLOB2026DB_PASSWORD": "{postgres-password.value}",
+        "SORTEBLOB2026DB_URI": "postgresql://{postgres-user-uri-encoded.value}:{postgres-password-uri-encoded.value}@{SorteMasterDatabase.bindings.tcp.host}:{SorteMasterDatabase.bindings.tcp.port}/SorteBlob2026Db",
+        "SORTEBLOB2026DB_JDBCCONNECTIONSTRING": "jdbc:postgresql://{SorteMasterDatabase.bindings.tcp.host}:{SorteMasterDatabase.bindings.tcp.port}/SorteBlob2026Db",
+        "SORTEBLOB2026DB_DATABASENAME": "SorteBlob2026Db",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "{compose-dashboard.bindings.otlp-grpc.url}",
+        "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+        "OTEL_SERVICE_NAME": "sorte-blob-service"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 11009,
+          "external": true
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 11009,
+          "external": true
+        }
+      }
+    },
+    "sorte-designer-studio-service": {
+      "type": "project.v1",
+      "path": "../ANTSoftFederation.DesignerStudio/SorteFederation.DesignerStudio.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "Kestrel__Endpoints__http__Url": "http://*:{sorte-designer-studio-service.bindings.http.targetPort}",
+        "Auth__Jwt__Issuer": "sorte.portal",
+        "Auth__Jwt__Audience": "sorte",
+        "Auth__Jwt__Key": "{jwt-signing-key.value}",
+        "DESIGNER_TEMPLATE_PACKAGES_PATH": "/Contents/Data",
+        "ConnectionStrings__sorte-rabbitmq": "{sorte-rabbitmq.connectionString}",
+        "ConnectionStrings__sorte_rabbitmq": "{sorte-rabbitmq.connectionString}",
+        "SORTE_RABBITMQ_HOST": "{sorte-rabbitmq.bindings.tcp.host}",
+        "SORTE_RABBITMQ_PORT": "{sorte-rabbitmq.bindings.tcp.port}",
+        "SORTE_RABBITMQ_USERNAME": "{rabbitmq-user.value}",
+        "SORTE_RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "SORTE_RABBITMQ_URI": "amqp://{rabbitmq-user-uri-encoded.value}:{rabbitmq-password-uri-encoded.value}@{sorte-rabbitmq.bindings.tcp.host}:{sorte-rabbitmq.bindings.tcp.port}",
+        "FIGMA_API": "https://api.figma.com/v1/files/",
+        "services__Figma-Api__https__0": "https://api.figma.com/v1/files/",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "{compose-dashboard.bindings.otlp-grpc.url}",
+        "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+        "OTEL_SERVICE_NAME": "sorte-designer-studio-service"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 11005,
+          "external": true
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 11005,
+          "external": true
+        }
+      }
+    },
+    "sorte-realtime-service": {
+      "type": "project.v1",
+      "path": "../ANTSoftFederation.Realtime/SorteFederation.Realtime.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "HTTP_PORTS": "{sorte-realtime-service.bindings.http.targetPort}",
+        "Auth__Jwt__Issuer": "sorte.portal",
+        "Auth__Jwt__Audience": "sorte",
+        "Auth__Jwt__Key": "{jwt-signing-key.value}",
+        "ConnectionStrings__sorte-rabbitmq": "{sorte-rabbitmq.connectionString}",
+        "ConnectionStrings__sorte_rabbitmq": "{sorte-rabbitmq.connectionString}",
+        "SORTE_RABBITMQ_HOST": "{sorte-rabbitmq.bindings.tcp.host}",
+        "SORTE_RABBITMQ_PORT": "{sorte-rabbitmq.bindings.tcp.port}",
+        "SORTE_RABBITMQ_USERNAME": "{rabbitmq-user.value}",
+        "SORTE_RABBITMQ_PASSWORD": "{rabbitmq-password.value}",
+        "SORTE_RABBITMQ_URI": "amqp://{rabbitmq-user-uri-encoded.value}:{rabbitmq-password-uri-encoded.value}@{sorte-rabbitmq.bindings.tcp.host}:{sorte-rabbitmq.bindings.tcp.port}",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "{compose-dashboard.bindings.otlp-grpc.url}",
+        "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+        "OTEL_SERVICE_NAME": "sorte-realtime-service"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http"
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http"
+        }
+      }
+    },
+    "sorte-gateway": {
+      "type": "project.v1",
+      "path": "../ANTSoftFederation.LoadBalancing/SorteFederation.LoadBalancing.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "Kestrel__Endpoints__http__Url": "http://*:{sorte-gateway.bindings.http.targetPort}",
+        "JwtSettings__Issuer": "sorte.portal",
+        "JwtSettings__Audience": "sorte",
+        "JwtSettings__SecretKey": "{jwt-signing-key.value}",
+        "SORTE_PORTAL_SERVICE_HTTP": "{sorte-portal-service.bindings.http.url}",
+        "services__sorte-portal-service__http__0": "{sorte-portal-service.bindings.http.url}",
+        "SORTE_PORTAL_SERVICE_HTTPS": "{sorte-portal-service.bindings.https.url}",
+        "services__sorte-portal-service__https__0": "{sorte-portal-service.bindings.https.url}",
+        "SORTE_PORTAL_BUILDER_HTTP": "{sorte-portal-builder.bindings.http.url}",
+        "services__sorte-portal-builder__http__0": "{sorte-portal-builder.bindings.http.url}",
+        "SORTE_PORTAL_BUILDER_HTTPS": "{sorte-portal-builder.bindings.https.url}",
+        "services__sorte-portal-builder__https__0": "{sorte-portal-builder.bindings.https.url}",
+        "SORTE_BLOB_SERVICE_HTTP": "{sorte-blob-service.bindings.http.url}",
+        "services__sorte-blob-service__http__0": "{sorte-blob-service.bindings.http.url}",
+        "SORTE_BLOB_SERVICE_HTTPS": "{sorte-blob-service.bindings.https.url}",
+        "services__sorte-blob-service__https__0": "{sorte-blob-service.bindings.https.url}",
+        "SORTE_DESIGNER_STUDIO_SERVICE_HTTP": "{sorte-designer-studio-service.bindings.http.url}",
+        "services__sorte-designer-studio-service__http__0": "{sorte-designer-studio-service.bindings.http.url}",
+        "SORTE_DESIGNER_STUDIO_SERVICE_HTTPS": "{sorte-designer-studio-service.bindings.https.url}",
+        "services__sorte-designer-studio-service__https__0": "{sorte-designer-studio-service.bindings.https.url}",
+        "SORTE_REALTIME_SERVICE_HTTP": "{sorte-realtime-service.bindings.http.url}",
+        "services__sorte-realtime-service__http__0": "{sorte-realtime-service.bindings.http.url}",
+        "SORTE_REALTIME_SERVICE_HTTPS": "{sorte-realtime-service.bindings.https.url}",
+        "services__sorte-realtime-service__https__0": "{sorte-realtime-service.bindings.https.url}",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "{compose-dashboard.bindings.otlp-grpc.url}",
+        "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+        "OTEL_SERVICE_NAME": "sorte-gateway"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 11000,
+          "external": true
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 11000,
+          "external": true
+        }
+      }
+    },
+    "sorte-builder-studio": {
+      "type": "executable.v0",
+      "workingDirectory": "../../clients/AntsoftBuilder",
+      "command": "npm.cmd",
+      "args": [
+        "run",
+        "start:aspire"
+      ],
+      "env": {
+        "SORTE_PORTAL_BUILDER_HTTP": "{sorte-portal-builder.bindings.http.url}",
+        "services__sorte-portal-builder__http__0": "{sorte-portal-builder.bindings.http.url}",
+        "SORTE_PORTAL_BUILDER_HTTPS": "{sorte-portal-builder.bindings.https.url}",
+        "services__sorte-portal-builder__https__0": "{sorte-portal-builder.bindings.https.url}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 4202,
+          "external": true
+        }
+      }
+    },
+    "sorte-design-studio-ui": {
+      "type": "executable.v0",
+      "workingDirectory": "../../clients/ANTSoftDesignStudio",
+      "command": "npm.cmd",
+      "args": [
+        "run",
+        "start:aspire"
+      ],
+      "env": {
+        "SORTE_GATEWAY_HTTP": "{sorte-gateway.bindings.http.url}",
+        "services__sorte-gateway__http__0": "{sorte-gateway.bindings.http.url}",
+        "SORTE_GATEWAY_HTTPS": "{sorte-gateway.bindings.https.url}",
+        "services__sorte-gateway__https__0": "{sorte-gateway.bindings.https.url}",
+        "SORTE_DESIGNER_STUDIO_SERVICE_HTTP": "{sorte-designer-studio-service.bindings.http.url}",
+        "services__sorte-designer-studio-service__http__0": "{sorte-designer-studio-service.bindings.http.url}",
+        "SORTE_DESIGNER_STUDIO_SERVICE_HTTPS": "{sorte-designer-studio-service.bindings.https.url}",
+        "services__sorte-designer-studio-service__https__0": "{sorte-designer-studio-service.bindings.https.url}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 4203,
+          "external": true
+        }
+      }
+    },
+    "sorte-portal-ui": {
+      "type": "executable.v0",
+      "workingDirectory": "../../clients/ANTSoftPortal",
+      "command": "npm.cmd",
+      "args": [
+        "run",
+        "start:aspire"
+      ],
+      "env": {
+        "SORTE_GATEWAY_HTTP": "{sorte-gateway.bindings.http.url}",
+        "services__sorte-gateway__http__0": "{sorte-gateway.bindings.http.url}",
+        "SORTE_GATEWAY_HTTPS": "{sorte-gateway.bindings.https.url}",
+        "services__sorte-gateway__https__0": "{sorte-gateway.bindings.https.url}",
+        "SORTE_PORTAL_SERVICE_HTTP": "{sorte-portal-service.bindings.http.url}",
+        "services__sorte-portal-service__http__0": "{sorte-portal-service.bindings.http.url}",
+        "SORTE_PORTAL_SERVICE_HTTPS": "{sorte-portal-service.bindings.https.url}",
+        "services__sorte-portal-service__https__0": "{sorte-portal-service.bindings.https.url}"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 4204,
+          "external": true
+        }
+      }
+    },
+    "sorte-web-site": {
+      "type": "project.v1",
+      "path": "../ANTSoftFederation.WebSite/SorteFederation.WebSite.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "Kestrel__Endpoints__http__Url": "http://*:{sorte-web-site.bindings.http.targetPort}",
+        "POSTGRES_USER": "{postgres-user.value}",
+        "ConnectionStrings__cache": "{cache.connectionString}",
+        "CACHE_HOST": "{cache.bindings.tcp.host}",
+        "CACHE_PORT": "{cache.bindings.tcp.port}",
+        "CACHE_PASSWORD": "{cache-password.value}",
+        "CACHE_URI": "{cache.bindings.tcp.scheme}://:{cache-password-uri-encoded.value}@{cache.bindings.tcp.host}:{cache.bindings.tcp.port}",
+        "WEB_DATA_PATH": "/data",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "{compose-dashboard.bindings.otlp-grpc.url}",
+        "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+        "OTEL_SERVICE_NAME": "sorte-web-site"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 9009,
+          "external": true
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 9009,
+          "external": true
+        }
+      }
+    },
+    "sorte-portal-web": {
+      "type": "project.v1",
+      "path": "../ANTSoftFederation.PortalWeb/SorteFederation.PortalWeb.csproj",
+      "env": {
+        "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY": "in_memory",
+        "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "true",
+        "Kestrel__Endpoints__http__Url": "http://*:{sorte-portal-web.bindings.http.targetPort}",
+        "ConnectionStrings__cache": "{cache.connectionString}",
+        "CACHE_HOST": "{cache.bindings.tcp.host}",
+        "CACHE_PORT": "{cache.bindings.tcp.port}",
+        "CACHE_PASSWORD": "{cache-password.value}",
+        "CACHE_URI": "{cache.bindings.tcp.scheme}://:{cache-password-uri-encoded.value}@{cache.bindings.tcp.host}:{cache.bindings.tcp.port}",
+        "WEB_DATA_PATH": "/data",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "{compose-dashboard.bindings.otlp-grpc.url}",
+        "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+        "OTEL_SERVICE_NAME": "sorte-portal-web"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 9008,
+          "external": true
+        },
+        "https": {
+          "scheme": "https",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 9008,
+          "external": true
+        }
+      }
+    },
+    "cache-password": {
+      "type": "parameter.v0",
+      "value": "{cache-password.inputs.value}",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "secret": true,
+          "default": {
+            "generate": {
+              "minLength": 22,
+              "special": false
+            }
+          }
+        }
+      }
+    },
+    "cache-password-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{cache-password.value}",
+      "filter": "uri"
+    },
+    "compose-dashboard": {
+      "type": "container.v1",
+      "image": "mcr.microsoft.com/dotnet/nightly/aspire-dashboard:13.6",
+      "env": {
+        "ASPIRE_DASHBOARD_FORWARDEDHEADERS_ENABLED": "true"
+      },
+      "bindings": {
+        "http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "port": 8080,
+          "targetPort": 18888,
+          "external": true
+        },
+        "otlp-grpc": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 18889
+        },
+        "otlp-http": {
+          "scheme": "http",
+          "protocol": "tcp",
+          "transport": "http",
+          "targetPort": 18890
+        }
+      }
+    },
+    "rabbitmq-user-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{rabbitmq-user.value}",
+      "filter": "uri"
+    },
+    "rabbitmq-password-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{rabbitmq-password.value}",
+      "filter": "uri"
+    },
+    "postgres-user-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{postgres-user.value}",
+      "filter": "uri"
+    },
+    "postgres-password-uri-encoded": {
+      "type": "annotated.string",
+      "value": "{postgres-password.value}",
+      "filter": "uri"
+    },
+    "cond-cache-bindings-tcp-tlsenabled-3eddb73a": {
+      "type": "value.v0",
+      "connectionString": ""
+    }
+  }
+}

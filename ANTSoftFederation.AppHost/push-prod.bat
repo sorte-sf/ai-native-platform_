@@ -1,0 +1,1 @@
+aspirate generate --output-format compose  --private-registry-url https://registry.docker.bakelor.com --private-registry-username bakelor   --private-registry-password spRFcL63P  --include-dashboard

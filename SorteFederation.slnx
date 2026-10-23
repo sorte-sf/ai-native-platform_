@@ -1,0 +1,19 @@
+<Solution>
+  <Project Path="ANTSoftFederation.AppHost/SorteFederation.AppHost.csproj" />
+  <Project Path="ANTSoftFederation.BlobApi/SorteFederation.BlobApi.csproj" Id="53c8bcc4-a544-4504-af73-557dc3e02526" />
+  <Project Path="ANTSoftFederation.Builders/SorteFederation.Builders.csproj" Id="cc29f2b8-0d2e-4318-aa8f-c8c20e92fa07" />
+  <Project Path="ANTSoftFederation.DesignerStudio/SorteFederation.DesignerStudio.csproj" Id="23444d93-1dc1-4d46-ab87-d02f1961aa86" />
+  <Project Path="ANTSoftFederation.EncryptEFCoreColumn/SorteFederation.EncryptEFCoreColumn.csproj" />
+  <Project Path="ANTSoftFederation.GlobalEnums/SorteFederation.GlobalEnums.csproj" />
+  <Project Path="ANTSoftFederation.KeyVault/SorteFederation.KeyVault.csproj" />
+  <Project Path="ANTSoftFederation.LoadBalancing/SorteFederation.LoadBalancing.csproj" Id="029a7add-3f1e-46a2-b79f-f86109bd51b8" />
+  <Project Path="ANTSoftFederation.Logger/SorteFederation.Logger.csproj" />
+  <Project Path="ANTSoftFederation.Mediator/SortetFederation.Mediator.csproj" />
+  <Project Path="ANTSoftFederation.Models/SorteFederation.Models.csproj" Id="aea1faf4-eb8c-4113-b97a-c2e261324c5d" />
+  <Project Path="ANTSoftFederation.PaymentGateway/SorteFederation.PaymentGateway.csproj" Id="b822d6c1-ea40-44f5-ac37-06db7125b075" />
+  <Project Path="ANTSoftFederation.Portal/SorteFederation.Portal.csproj" Id="735b7f54-69e9-465a-95f8-28e2814bbdf6" />
+  <Project Path="ANTSoftFederation.PortalWeb/SorteFederation.PortalWeb.csproj" />
+  <Project Path="ANTSoftFederation.Realtime/SorteFederation.Realtime.csproj" />
+  <Project Path="ANTSoftFederation.ServiceDefaults/SorteFederation.ServiceDefaults.csproj" />
+  <Project Path="ANTSoftFederation.Shared/SorteFederation.Shared.csproj" />
+</Solution>
