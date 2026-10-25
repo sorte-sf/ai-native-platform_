@@ -11,7 +11,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Aspire.StackExchange.Redis.OutputCaching" Version="13.6.3" />
+		<PackageReference Include="Aspire.StackExchange.Redis.OutputCaching" Version="13.6.4" />
 		<PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="10.0.13" />
 	</ItemGroup>
 

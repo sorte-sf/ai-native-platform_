@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Portainer-Stack/">
+    <File Path="ANTSoftFederation.AppHost/sorte_stack.yaml" />
+  </Folder>
   <Project Path="ANTSoftFederation.AppHost/SorteFederation.AppHost.csproj" />
   <Project Path="ANTSoftFederation.BlobApi/SorteFederation.BlobApi.csproj" Id="53c8bcc4-a544-4504-af73-557dc3e02526" />
   <Project Path="ANTSoftFederation.Builders/SorteFederation.Builders.csproj" Id="cc29f2b8-0d2e-4318-aa8f-c8c20e92fa07" />

@@ -1,8 +1,15 @@
 
 using Figgle.Fonts;
+using SorteFederation.Logger;
 
 var builder = WebApplication.CreateBuilder(args);
+
 builder.AddServiceDefaults();
+
+builder.Services.AddProblemDetails();
+
+builder.Host.UseANTLogging();
+
 builder.AddRabbitMQClient("messaging");
 
 var jwtKey = builder.Configuration["Auth:Jwt:Key"];

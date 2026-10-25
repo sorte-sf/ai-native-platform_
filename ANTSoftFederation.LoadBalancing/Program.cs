@@ -1,9 +1,14 @@
 
+using SorteFederation.Logger;
 using SorteFederation.Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+
+builder.Services.AddProblemDetails(); 
+
+builder.Host.UseANTLogging();
 
 // builder.Services.AddLettuceEncrypt();
 

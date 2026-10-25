@@ -15,19 +15,19 @@
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.13" />
 		<PackageReference Include="Microsoft.Extensions.AI" Version="10.11.0" />
 		<PackageReference Include="NAudio" Version="3.3.0" />
-		<PackageReference Include="Scalar.AspNetCore" Version="2.18.2" />
+		<PackageReference Include="Scalar.AspNetCore" Version="2.18.3" />
 
 		<PackageReference Include="Otp.NET" Version="1.4.1" />
 		<PackageReference Include="QRCoder" Version="1.8.1" />
 
-		<PackageReference Include="Aspire.Hosting.AppHost" Version="13.6.2" />
-		<PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.6.3" />
-		<PackageReference Include="Aspire.Hosting.RabbitMQ" Version="13.6.3" />
-		<PackageReference Include="Aspire.RabbitMQ.Client" Version="13.6.3" />
-		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.6.3" />
-		<PackageReference Include="Aspire.StackExchange.Redis.OutputCaching" Version="13.6.3" />
-		<PackageReference Include="Aspire.Hosting.Redis" Version="13.6.3" />
-		<PackageReference Include="Aspire.Hosting.Qdrant" Version="13.6.3" />
+		<PackageReference Include="Aspire.Hosting.AppHost" Version="13.6.4" />
+		<PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.6.4" />
+		<PackageReference Include="Aspire.Hosting.RabbitMQ" Version="13.6.4" />
+		<PackageReference Include="Aspire.RabbitMQ.Client" Version="13.6.4" />
+		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.6.4" />
+		<PackageReference Include="Aspire.StackExchange.Redis.OutputCaching" Version="13.6.4" />
+		<PackageReference Include="Aspire.Hosting.Redis" Version="13.6.4" />
+		<PackageReference Include="Aspire.Hosting.Qdrant" Version="13.6.4" />
 
 		<PackageReference Include="CommunityToolkit.Aspire.OllamaSharp" Version="13.6.0" />
 
@@ -76,7 +76,7 @@
 
 		<PackageReference Include="ModelContextProtocol" Version="2.3.0" />
 
-		<PackageReference Include="MailKit" Version="4.18.1" />
+		<PackageReference Include="MailKit" Version="4.18.2" />
 		<PackageReference Include="MimeKit" Version="4.18.2" />
 
 		<PackageReference Include="TickerQ" Version="10.4.0" />
