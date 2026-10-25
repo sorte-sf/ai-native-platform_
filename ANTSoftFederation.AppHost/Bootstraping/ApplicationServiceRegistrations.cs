@@ -224,7 +224,7 @@ public static class ApplicationServiceRegistrations
                                .WithReference(cache)
                                .WithReference(messaging).WaitFor(messaging)
                                .WithOtlpExporter()
-                               //.WithReference(realtimeService)
+                               .WithReference(realtimeService)
                             ;
 
         var ollama = builder.AddOllama("sorte-ollama", port: 11434)
@@ -283,7 +283,7 @@ public static class ApplicationServiceRegistrations
                             .WithOtlpExporter()
                             .WaitFor(prometheus)
                             .WithReference(mailpit)
-                            //.WithReference(realtimeService)
+                            .WithReference(realtimeService)
                          ;
 
         var blobservice = builder.AddProject<Projects.SorteFederation_BlobApi>("sorte-blob-service")
@@ -336,7 +336,7 @@ public static class ApplicationServiceRegistrations
                                  .WithVolume("designer_studio_template_db", "/Contents/Data", env: "DESIGNER_TEMPLATE_PACKAGES_PATH")
                                  .WithReference(messaging).WaitFor(messaging)
                                  .WithOtlpExporter()
-                                 //.WithReference(realtimeService)
+                                 .WithReference(realtimeService)
                               ;
 
         if (figmaExternalService is not null)
@@ -360,7 +360,7 @@ public static class ApplicationServiceRegistrations
                              .WithReference(portalBuilder)
                              .WithReference(blobservice)
                              .WithReference(designStudioService)
-                             //.WithReference(realtimeService)
+                             .WithReference(realtimeService)
                              .WithOtlpExporter()
                               ;
 

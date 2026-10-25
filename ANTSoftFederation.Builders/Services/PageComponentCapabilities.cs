@@ -9,6 +9,7 @@ public static class PageComponentCapabilities
     private static readonly Manifest Contract = Load();
     private static readonly Dictionary<string, bool> Types =
         Contract.Components.ToDictionary(component => component.Type, component => component.Children, StringComparer.Ordinal);
+    public static IReadOnlyCollection<string> SupportedTypes => Types.Keys;
     public static int SchemaVersion => Contract.SchemaVersion;
     public static bool TryGet(string type, out bool children) => Types.TryGetValue(type, out children);
     private static readonly Dictionary<string, string?> Bindings =

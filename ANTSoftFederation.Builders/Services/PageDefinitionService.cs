@@ -7,9 +7,13 @@ public sealed record PageNode(string Id, string Type, string? Text = null, Guid?
     string? ChartKind = null, string? ValueField = null, string? TitleField = null, string? SecondaryValueField = null,
     int? GalleryColumns = null, int? PageSize = null, string? ImageField = null, string? TargetNodeId = null,
     string? ActionType = null, string? ActionValue = null, string? NavigationPlacement = null,
-    string? NavigationLogoUrl = null, bool FloatingButton = false);
+    string? NavigationLogoUrl = null, bool FloatingButton = false, List<string>? PivotRows = null,
+    List<string>? PivotColumns = null, List<PagePivotValue>? PivotValues = null, bool? PivotRowTotals = null,
+    bool? PivotColumnTotals = null, string? CalendarTitleField = null,
+    string? CalendarStartField = null, string? CalendarEndField = null);
 [System.Text.Json.Serialization.JsonUnmappedMemberHandling(System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow)]
 public sealed record PageCrudActions(bool Create = true, bool View = true, bool Edit = true, bool Delete = true);
+public sealed record PagePivotValue(string Field, string Aggregation, string? Label = null);
 public sealed record PageTableColumn(string Field, string Title, int? Width = null, string? Align = null, string? Format = null, bool Hidden = false);
 public sealed record PageDefinition(int SchemaVersion, List<PageNode> Children);
 
@@ -57,7 +61,8 @@ public sealed class PageDefinitionService(BuilderDbContext db)
         {
             if (node is null || depth > 12 || ++count > 500) throw new ArgumentException("Page tree exceeds its size or depth limit.");
             if (string.IsNullOrWhiteSpace(node.Id) || node.Id.Length > 100 || !ids.Add(node.Id)) throw new ArgumentException("Every component needs a unique ID.");
-            if (node.Type is null || !PageComponentCapabilities.TryGet(node.Type, out var supportsChildren)) throw new ArgumentException("Unsupported component type.");
+            if (node.Type is null || !PageComponentCapabilities.TryGet(node.Type, out var supportsChildren))
+                throw new ArgumentException($"Unsupported component type '{node.Type ?? "<null>"}'. Supported types: {string.Join(", ", PageComponentCapabilities.SupportedTypes)}.");
             if (node.FloatingButton && node.Type != "button") throw new ArgumentException("Floating positioning is only supported for button components.");
             if (node.ActionType is not null && (node.Type != "button" || node.ActionType is not ("none" or "page" or "url" or "form")
                 || node.ActionType == "form" && !node.FloatingButton))
@@ -110,8 +115,18 @@ public sealed class PageDefinitionService(BuilderDbContext db)
             if (node.ValueField is { Length: > 0 } valueField && (node.Type != "chart" || node.ObjectId is not Guid valueObject || !fieldBindings.Contains((valueObject, valueField)))) throw new ArgumentException("Chart value field must belong to its data source.");
             if (node.SecondaryValueField is { Length: > 0 } secondaryField && (node.Type != "chart" || node.ChartKind is not ("bar-line" or "stacked-column") || node.ObjectId is not Guid secondaryObject || !fieldBindings.Contains((secondaryObject, secondaryField)))) throw new ArgumentException("Secondary chart value field must belong to its data source.");
             if (node.TitleField is { Length: > 0 } titleField && (node.Type is not ("kanban" or "gallery") || titleField.Length > 100 || node.ObjectId is Guid titleObject && !fieldBindings.Contains((titleObject, titleField)))) throw new ArgumentException("Card title field must belong to its data source.");
+            if (node.CalendarTitleField is { Length: > 0 } calendarTitle && (node.Type != "calendar" || calendarTitle.Length > 100 || node.ObjectId is Guid calendarTitleObject && !fieldBindings.Contains((calendarTitleObject, calendarTitle)))) throw new ArgumentException("Calendar title field must belong to its data source.");
+            if (node.CalendarStartField is { Length: > 0 } calendarStart && (node.Type != "calendar" || calendarStart.Length > 100 || node.ObjectId is not Guid startObject || !fieldBindings.Contains((startObject, calendarStart)))) throw new ArgumentException("Calendar start date field must belong to its data source.");
+            if (node.CalendarEndField is { Length: > 0 } calendarEnd && (node.Type != "calendar" || calendarEnd.Length > 100 || node.ObjectId is not Guid endObject || !fieldBindings.Contains((endObject, calendarEnd)))) throw new ArgumentException("Calendar end date field must belong to its data source.");
             if (node.GalleryColumns is not null && (node.Type != "gallery" || node.GalleryColumns is < 1 or > 6)) throw new ArgumentException("Gallery columns must be between 1 and 6.");
             if (node.PageSize is not null && (node.Type is not ("gallery" or "data-grid") || node.PageSize is < 1 or > 100)) throw new ArgumentException("Invalid page size.");
+            if (node.PivotRows is not null && (node.Type != "pivot-table" || node.PivotRows.Count > 3 || node.PivotRows.Any(field => string.IsNullOrWhiteSpace(field) || field.Length > 100) || node.PivotRows.Distinct(StringComparer.Ordinal).Count() != node.PivotRows.Count)) throw new ArgumentException("Pivot table supports up to three unique row fields.");
+            if (node.PivotColumns is not null && (node.Type != "pivot-table" || node.PivotColumns.Count > 2 || node.PivotColumns.Any(field => string.IsNullOrWhiteSpace(field) || field.Length > 100) || node.PivotColumns.Distinct(StringComparer.Ordinal).Count() != node.PivotColumns.Count)) throw new ArgumentException("Pivot table supports up to two unique column fields.");
+            if (node.PivotValues is not null && (node.Type != "pivot-table" || node.PivotValues.Count > 5 || node.PivotValues.Any(value => value is null || string.IsNullOrWhiteSpace(value.Field) || value.Field.Length > 100 || value.Aggregation is not ("count" or "sum" or "average" or "min" or "max") || value.Label?.Length > 100) || node.PivotValues.Select(value => value.Field).Distinct(StringComparer.Ordinal).Count() != node.PivotValues.Count)) throw new ArgumentException("Pivot table supports up to five valid value fields.");
+            if ((node.PivotRows ?? []).Intersect(node.PivotColumns ?? [], StringComparer.Ordinal).Any()) throw new ArgumentException("Pivot row and column dimensions must be different fields.");
+            if ((node.PivotRowTotals is not null || node.PivotColumnTotals is not null) && node.Type != "pivot-table") throw new ArgumentException("Pivot total settings require a pivot table.");
+            if ((node.PivotRows ?? []).Any(field => node.ObjectId is not Guid pivotObject || !fieldBindings.Contains((pivotObject, field))) || (node.PivotColumns ?? []).Any(field => node.ObjectId is not Guid pivotColumnObject || !fieldBindings.Contains((pivotColumnObject, field))) || (node.PivotValues ?? []).Any(value => node.ObjectId is not Guid pivotValueObject || !fieldBindings.Contains((pivotValueObject, value.Field)))) throw new ArgumentException("Pivot fields must belong to its data source.");
+            if (publishing && node.Type == "pivot-table" && (node.ObjectId is null || node.PivotRows is not { Count: > 0 } || node.PivotValues is not { Count: > 0 })) throw new ArgumentException("Pivot table needs a data source, at least one row field and one value field before publishing.");
             if (node.ImageField is not null && (node.Type != "gallery" || node.ImageField.Length > 100 || node.ObjectId is Guid imageObject && !fieldBindings.Contains((imageObject, node.ImageField)))) throw new ArgumentException("Invalid gallery image field.");
             if (node.Type == "kanban" && publishing && (node.Columns?.Count != 1 || string.IsNullOrWhiteSpace(node.TitleField))) throw new ArgumentException("Kanban needs a stage field and card title field.");
             if (node.ObjectId is Guid objectId && !objectIds.Contains(objectId)) throw new ArgumentException("Data source belongs to another application or tenant.");
@@ -140,6 +155,7 @@ public sealed class PageDefinitionService(BuilderDbContext db)
                 if (node.ObjectId is Guid source && node.TableColumns.Any(column => !string.IsNullOrWhiteSpace(column.Field) && !fieldBindings.Contains((source, column.Field)))) throw new ArgumentException("Table column field does not belong to its data source.");
             }
             if (binding == "object" && publishing && node.ObjectId is null) throw new ArgumentException("Dashboard widget needs a data source before publishing.");
+            if (publishing && node.Type == "calendar" && string.IsNullOrWhiteSpace(node.CalendarStartField)) throw new ArgumentException("Calendar needs a start date field before publishing.");
 
             if (node.Type == "chart" && publishing && node.Columns?.Count != 1) throw new ArgumentException("Chart needs exactly one grouping field before publishing.");
 
