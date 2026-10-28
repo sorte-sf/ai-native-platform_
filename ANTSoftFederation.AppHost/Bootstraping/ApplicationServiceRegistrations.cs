@@ -71,6 +71,8 @@ public static class ApplicationServiceRegistrations
         {
             dashboard.WithHostPort(GetPort(builder.Configuration, "ASPIRE_DASHBOARD_PORT", 8080)).WithForwardedHeaders(enabled: true);
         });
+        
+       //var registry = builder.AddContainerRegistry("dockerhub", "docker.io");
 
         var externalApiSettings = builder.Configuration.GetSection("ExternalAPiSettings").Get<ExternalServiceUrl>();
 
