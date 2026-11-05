@@ -26,7 +26,7 @@
 		
 		<!--<PackageReference Include="CommunityToolkit.Aspire.Hosting.Stripe" Version="13.5.0" />-->
 		
-		<PackageReference Include="Scalar.Aspire" Version="0.12.3" />
+		<PackageReference Include="Scalar.Aspire" Version="0.12.5" />
 
 		<PackageVersion Include="VaultSharp" Version="1.17.5.1" />
 		<PackageVersion Include="VaultSharp.Extensions.Configuration" Version="1.0.5" />

@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SorteFederation.AppHost.Models;
-using SorteFederation.AppHost.resources; 
+using SorteFederation.AppHost.resources;
 
 namespace SorteFederation.AppHost.Bootstraping;
 
@@ -32,7 +32,7 @@ public static class ApplicationServiceRegistrations
                              .ExcludeFromManifest()
                              ;
 
-        var prometheus = builder.AddContainer("prometheus", "prom/prometheus")
+       /* var prometheus = builder.AddContainer("prometheus", "prom/prometheus")
                                 .WithArgs("--config.file=/etc/prometheus/prometheus.yml", "--web.enable-otlp-receiver")
                                 .WithBindMount("./prometheus", "/etc/prometheus", isReadOnly: false)
                                 .WithHttpEndpoint(port: 9090, targetPort: 9090, name: "http")
@@ -49,7 +49,7 @@ public static class ApplicationServiceRegistrations
                              .WaitFor(prometheus)
                              .WithLifetime(ContainerLifetime.Persistent)
                              .ExcludeFromManifest()
-                              ;
+                              ;*/
 
         var dockerComposeEnv = builder.AddDockerComposeEnvironment("compose")
                  .WithProperties(env =>
@@ -71,8 +71,8 @@ public static class ApplicationServiceRegistrations
         {
             dashboard.WithHostPort(GetPort(builder.Configuration, "ASPIRE_DASHBOARD_PORT", 8080)).WithForwardedHeaders(enabled: true);
         });
-        
-       //var registry = builder.AddContainerRegistry("dockerhub", "docker.io");
+
+        //var registry = builder.AddContainerRegistry("dockerhub", "docker.io");
 
         var externalApiSettings = builder.Configuration.GetSection("ExternalAPiSettings").Get<ExternalServiceUrl>();
 
@@ -126,10 +126,6 @@ public static class ApplicationServiceRegistrations
                               .WithLifetime(ContainerLifetime.Persistent)
                              ;
 
-        var masterDb = postgres.AddDatabase("SortePortalDb2026");
-        var builderDb = postgres.AddDatabase("SorteBuilderDb2026");
-        var blobDb = postgres.AddDatabase("SorteBlob2026Db");
-
         var rabbitMqPort = GetPort(builder.Configuration, "RabbitMQ:Port", 5672);
         var messaging = builder.AddRabbitMQ("messaging", userName: rabbitUser, password: rabbitPwd, port: rabbitMqPort)
                                .WithManagementPlugin(15672)
@@ -162,7 +158,7 @@ public static class ApplicationServiceRegistrations
 
         var realtimeService = builder.AddProject<Projects.SorteFederation_Realtime>("sorte-realtime-service")
                                .WithEndpoint("http", endpoint =>
-                               { 
+                               {
                                    endpoint.IsProxied = false;
                                })
                                .WithEnvironment(context =>
@@ -190,6 +186,11 @@ public static class ApplicationServiceRegistrations
                                .WithLifetime(ContainerLifetime.Persistent)
                                ;
 
+        var masterDb = builder.AddPostgres("sorte-platform-portal-db")
+                              .WithPgAdmin()
+                              .WithDataVolume("sorte-c0f1ef2048-portal-postgres-data")
+                              .AddDatabase("SortePlatformDb2027");
+         
         var portalApi = builder.AddProject<Projects.SorteFederation_Portal>("sorte-portal-service")
                                .WithEndpoint("http", endpoint =>
                                {
@@ -240,6 +241,11 @@ public static class ApplicationServiceRegistrations
         var chatModel = ollama.AddModel("ollama-chat", "qwen3:8b");
         var embeddingModel = ollama.AddModel("ollama-embeddings", "qwen3-embedding:0.6b");
 
+        var builderDb = builder.AddPostgres("sorte-platform-builder-db")
+                               .WithPgAdmin()
+                               .WithDataVolume("sorte-c0f1ef2048-builder-postgres-data")
+                               .AddDatabase("SortePlatformBuilderDb2026");
+         
         var portalBuilder = builder.AddProject<Projects.SorteFederation_Builders>("sorte-portal-builder")
                             .WithEndpoint("http", endpoint =>
                             {
@@ -288,6 +294,8 @@ public static class ApplicationServiceRegistrations
                             .WithReference(realtimeService)
                          ;
 
+        var blobDb = builder.AddPostgres("sorte-platform-blob-db").WithPgAdmin().WithDataVolume("sorte-c0f1ef2048-builder-postgres-data").AddDatabase("SortePlatformBlob2026Db");
+         
         var blobservice = builder.AddProject<Projects.SorteFederation_BlobApi>("sorte-blob-service")
                                  .WithEndpoint("http", endpoint =>
                                  {

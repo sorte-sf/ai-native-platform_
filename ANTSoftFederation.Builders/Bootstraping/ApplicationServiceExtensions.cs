@@ -81,13 +81,13 @@ public static class ApplicationServiceExtensions
         builder.Services.AddHttpClient("blob-documents", client => client.Timeout = TimeSpan.FromMinutes(2));
 
         builder.Services.AddDbContext<BuilderDbContext>(options =>
-            options.UseNpgsql(builder.Configuration.GetConnectionString("SorteBuilderDb2026")
+            options.UseNpgsql(builder.Configuration.GetConnectionString("SortePlatformBuilderDb2026")
                 ?? builder.Configuration.GetConnectionString("builders-db")
                 ?? builder.Configuration.GetConnectionString("ANTPortalDb") ?? throw new InvalidOperationException("Aspire PostgreSQL connection 'ANTPortalDb' is required."),
                 npgsql => npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
         builder.Services.AddDbContext<TenantRuntimeDbContext>(options =>
-            options.UseNpgsql(builder.Configuration.GetConnectionString("SorteBuilderDb2026")
+            options.UseNpgsql(builder.Configuration.GetConnectionString("SortePlatformBuilderDb2026")
                 ?? builder.Configuration.GetConnectionString("builders-db")
                 ?? builder.Configuration.GetConnectionString("ANTPortalDb") ?? throw new InvalidOperationException("Aspire PostgreSQL connection 'ANTPortalDb' is required."),
                 npgsql => npgsql.UseVector()
@@ -388,9 +388,8 @@ public static class ApplicationServiceExtensions
     public static IServiceCollection AddDatabase<T>(this IServiceCollection services, IConfiguration configuration)
          where T : DbContext
     {
-        var connectionStr = configuration.GetConnectionString("SorteBuilderDb2026")
-            ?? configuration.GetConnectionString("builders-db")
-            ?? configuration.GetConnectionString("ANTPortalDb")
+        var connectionStr = configuration.GetConnectionString("SortePlatformBuilderDb2026")
+            ?? configuration.GetConnectionString("builders-db") 
             ?? configuration.GetConnectionString("DefaultConnection");
 
         if (string.IsNullOrWhiteSpace(connectionStr))
