@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.6.4">
+﻿<Project Sdk="Aspire.AppHost.Sdk/13.6.4">
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
@@ -26,7 +26,7 @@
 		
 		<!--<PackageReference Include="CommunityToolkit.Aspire.Hosting.Stripe" Version="13.5.0" />-->
 		
-		<PackageReference Include="Scalar.Aspire" Version="0.12.5" />
+		<PackageReference Include="Scalar.Aspire" Version="0.13.0" />
 
 		<PackageVersion Include="VaultSharp" Version="1.17.5.1" />
 		<PackageVersion Include="VaultSharp.Extensions.Configuration" Version="1.0.5" />
@@ -52,7 +52,7 @@
 		<PackageReference Include="CommunityToolkit.Aspire.Hosting.PostgreSQL.Extensions" Version="13.6.0" />-->
 
 		<PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
-		<PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.26.0" />
+		<PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.27.0" />
 
 	</ItemGroup>
 	

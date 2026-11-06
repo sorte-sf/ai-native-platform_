@@ -289,7 +289,7 @@ public static class ApplicationServiceRegistrations
                             .WithEnvironment("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "http://prometheus:9090/api/v1/otlp/v1/metrics")
                             .WithEnvironment("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", "http/protobuf")
                             .WithOtlpExporter()
-                            .WaitFor(prometheus)
+                          //  .WaitFor(prometheus)
                             .WithReference(mailpit)
                             .WithReference(realtimeService)
                          ;
