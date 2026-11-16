@@ -22,7 +22,7 @@ public sealed class TenantRuntimeContextFactory(IConfiguration configuration, IH
     {
         token.ThrowIfCancellationRequested();
         if (tenantId == Guid.Empty) throw new ArgumentException("A tenant id is required.", nameof(tenantId));
-        var connection = configuration.GetConnectionString("SorteBuilderDb2026")
+        var connection = configuration.GetConnectionString("SortePlatformBuilderDb2027")
             ?? configuration.GetConnectionString("builders-db")
             ?? throw new InvalidOperationException("The shared Builders PostgreSQL connection is required.");
         var options = new DbContextOptionsBuilder<TenantRuntimeDbContext>()

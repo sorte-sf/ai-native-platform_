@@ -126,7 +126,8 @@ public static class ApplicationServiceExtensions
         builder.Services.AddScoped<IProjectApplicationService, ProjectApplicationService>();
         builder.Services.AddScoped<IUserApplicationChatService, UserApplicationChatService>();
 
-        var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
+        var defaultConnection = builder.Configuration.GetConnectionString("SortePlatformDb2027")
+            ?? builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is missing.");
 
         builder.Services.AddSingleton<Npgsql.NpgsqlDataSource>(_ =>
@@ -156,7 +157,8 @@ public static class ApplicationServiceExtensions
     public static IServiceCollection AddDatabase<T>(this IServiceCollection services, IConfiguration configuration)
          where T : DbContext
     {
-        var connectionStr = configuration.GetConnectionString("DefaultConnection");
+        var connectionStr = configuration.GetConnectionString("SortePlatformDb2027")
+            ?? configuration.GetConnectionString("DefaultConnection");
 
         if (string.IsNullOrWhiteSpace(connectionStr))
         {

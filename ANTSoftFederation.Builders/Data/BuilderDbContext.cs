@@ -71,18 +71,17 @@ public sealed class BuilderDbContext(DbContextOptions<BuilderDbContext> options,
     public DbSet<BuilderAiUsagePeriod> AiUsagePeriods => Set<BuilderAiUsagePeriod>();
     public DbSet<BuilderUserFavouriteLink> UserFavouriteLinks => Set<BuilderUserFavouriteLink>();
 
-
-    public DbSet<TimeTickerEntity> TimeTickers { get; set; }
+    /*public DbSet<TimeTickerEntity> TimeTickers { get; set; }
     public DbSet<CronTickerEntity> CronTickers { get; set; }
-    public DbSet<CronTickerOccurrenceEntity<CronTickerEntity>> CronTickerOccurrences { get; set; }
+    public DbSet<CronTickerOccurrenceEntity<CronTickerEntity>> CronTickerOccurrences { get; set; }*/
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.ApplyConfiguration<TimeTickerEntity>(new TimeTickerConfigurations<TimeTickerEntity>("ticker"));
+        /*modelBuilder.ApplyConfiguration<TimeTickerEntity>(new TimeTickerConfigurations<TimeTickerEntity>("ticker"));
         modelBuilder.ApplyConfiguration<CronTickerEntity>(new CronTickerConfigurations<CronTickerEntity>("ticker"));
-        modelBuilder.ApplyConfiguration(new CronTickerOccurrenceConfigurations<CronTickerEntity>("ticker"));
+        modelBuilder.ApplyConfiguration(new CronTickerOccurrenceConfigurations<CronTickerEntity>("ticker"));*/
 
         modelBuilder.HasDefaultSchema("builders");
         modelBuilder.Entity<Tenant>().ToTable("Tenant").HasKey(x => x.TenantId);

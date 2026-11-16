@@ -681,9 +681,32 @@ public sealed class BuilderMetadataService(BuilderDbContext db)
     public async Task<BuilderWorkflow> PublishWorkflow(Guid tenantId, Guid workflowId, CancellationToken token)
     {
         var workflow = await db.Workflows.SingleOrDefaultAsync(x => x.Id == workflowId && x.TenantId == tenantId, token) ?? throw new KeyNotFoundException("Workflow was not found.");
+        if (workflow.Status != DefinitionStatus.Draft) throw new InvalidOperationException("Only draft workflows can be published. Reactivate archived workflows instead.");
         ValidateWorkflowDefinition(workflow.DefinitionJson);
         workflow.Status = DefinitionStatus.Published; workflow.Version++; workflow.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(token); return workflow;
+    }
+
+    public async Task<BuilderWorkflow> DeactivateWorkflow(Guid tenantId, Guid workflowId, CancellationToken token)
+    {
+        var workflow = await db.Workflows.SingleOrDefaultAsync(x => x.Id == workflowId && x.TenantId == tenantId, token)
+            ?? throw new KeyNotFoundException("Workflow was not found.");
+        if (workflow.Status != DefinitionStatus.Published) throw new InvalidOperationException("Only active workflows can be deactivated.");
+        workflow.Status = DefinitionStatus.Archived;
+        workflow.UpdatedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(token);
+        return workflow;
+    }
+
+    public async Task<BuilderWorkflow> ReactivateWorkflow(Guid tenantId, Guid workflowId, CancellationToken token)
+    {
+        var workflow = await db.Workflows.SingleOrDefaultAsync(x => x.Id == workflowId && x.TenantId == tenantId, token)
+            ?? throw new KeyNotFoundException("Workflow was not found.");
+        if (workflow.Status != DefinitionStatus.Archived) throw new InvalidOperationException("Only deactivated workflows can be reactivated.");
+        workflow.Status = DefinitionStatus.Published;
+        workflow.UpdatedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(token);
+        return workflow;
     }
 
     private static void ValidateWorkflowDefinition(string definitionJson)

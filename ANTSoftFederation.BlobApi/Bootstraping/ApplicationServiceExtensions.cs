@@ -112,7 +112,8 @@ public static class ApplicationServiceExtensions
     public static IServiceCollection AddDatabase<T>(this IServiceCollection services, IConfiguration configuration)
          where T : DbContext
     {
-        var connectionStr = configuration.GetConnectionString("DefaultConnection");
+        var connectionStr = configuration.GetConnectionString("SortePlatformBlobDb2027")
+            ?? configuration.GetConnectionString("DefaultConnection");
 
         if (string.IsNullOrWhiteSpace(connectionStr))
         {

@@ -31,24 +31,24 @@ global using System.Text;
 global using System.Threading.RateLimiting;
 
 global using SorteFederation.GlobalEnums;
-global using TickerQ.EntityFrameworkCore.Configurations;
-global using TickerQ.Utilities.Entities;
+global using Microsoft.EntityFrameworkCore.Diagnostics;
+global using Microsoft.AspNetCore.Http.Connections;
+global using Hangfire;
+global using Hangfire.SQLite;
 
-global using SorteFederation.Builders.TickerQ;
 global using SorteFederation.EncryptEFCoreColumn;
 global using SorteFederation.Shared;
 global using SorteFederation.Shared.EndPoints;
 global using SorteFederation.Shared.Realtime;
-global using Microsoft.EntityFrameworkCore.Diagnostics;
-global using TickerQ.Dashboard.DependencyInjection;
-global using TickerQ.DependencyInjection;
-global using TickerQ.EntityFrameworkCore.Customizer;
-global using TickerQ.EntityFrameworkCore.DependencyInjection;
+
+global using SorteFederation.Builders.Hubs;
+global using SorteFederation.Builders.Services;
+global using SorteFederation.Shared.TemplateCatalog;
+
 
 global using SorteFederation.ANTApplications.Bootstraping;
 global using SorteFederation.Logger; 
 global using SorteFederation.Builders.Contracts;
-global using SorteFederation.Builders.Services; 
 
 global using SorteFederation.Builders.Endpoints; 
  

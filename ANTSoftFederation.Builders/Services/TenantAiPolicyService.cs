@@ -32,7 +32,8 @@ public sealed class TenantAiPolicyService(BuilderDbContext db, IConfiguration co
         }
 
         var globalProvider = configuration["AI:Provider"] ?? "disabled";
-        var localDesignerDefault = feature.Equals("page-designer", StringComparison.OrdinalIgnoreCase);
+        var localDesignerDefault = feature.Equals("page-designer", StringComparison.OrdinalIgnoreCase) ||
+                                  feature.Equals("application-scaffold", StringComparison.OrdinalIgnoreCase);
         var mode = globalProvider.Equals("disabled", StringComparison.OrdinalIgnoreCase)
             ? localDesignerDefault ? "Local" : "Disabled"
             : globalProvider.Equals("local", StringComparison.OrdinalIgnoreCase) || globalProvider.Equals("ollama", StringComparison.OrdinalIgnoreCase)

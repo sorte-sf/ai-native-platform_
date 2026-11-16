@@ -40,7 +40,8 @@ public class DatabaseService
 
     private string GetConnectionString(string aspireName, string fallbackName)
     {
-        return _configuration.GetConnectionString(aspireName)
+        return _configuration.GetConnectionString("SortePlatformDb2027")
+            ?? _configuration.GetConnectionString(aspireName)
             ?? _configuration.GetConnectionString("SortePortalDb2026")
             ?? _configuration.GetConnectionString("AntMasterDatabase")
             ?? _configuration.GetConnectionString(fallbackName)

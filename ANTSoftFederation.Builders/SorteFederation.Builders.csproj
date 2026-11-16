@@ -12,22 +12,24 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Hangfire.AspNetCore" Version="1.8.25" /> 
+		<PackageReference Include="Hangfire.SQLite" Version="1.4.2" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
 		<PackageReference Include="Microsoft.Extensions.AI" Version="10.11.0" />
 		<PackageReference Include="NAudio" Version="3.3.0" />
-		<PackageReference Include="Scalar.AspNetCore" Version="2.19.0" />
+		<PackageReference Include="Scalar.AspNetCore" Version="2.21.0" />
 
 		<PackageReference Include="Otp.NET" Version="1.4.1" />
 		<PackageReference Include="QRCoder" Version="1.8.1" />
 
 		<PackageReference Include="Aspire.Hosting.AppHost" Version="13.6.4" />
-		<PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.6.4" />
-		<PackageReference Include="Aspire.Hosting.RabbitMQ" Version="13.6.4" />
-		<PackageReference Include="Aspire.RabbitMQ.Client" Version="13.6.4" />
-		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.6.4" />
-		<PackageReference Include="Aspire.StackExchange.Redis.OutputCaching" Version="13.6.4" />
-		<PackageReference Include="Aspire.Hosting.Redis" Version="13.6.4" />
-		<PackageReference Include="Aspire.Hosting.Qdrant" Version="13.6.4" />
+		<PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.6.5" />
+		<PackageReference Include="Aspire.Hosting.RabbitMQ" Version="13.6.5" />
+		<PackageReference Include="Aspire.RabbitMQ.Client" Version="13.6.5" />
+		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.6.5" />
+		<PackageReference Include="Aspire.StackExchange.Redis.OutputCaching" Version="13.6.5" />
+		<PackageReference Include="Aspire.Hosting.Redis" Version="13.6.5" />
+		<PackageReference Include="Aspire.Hosting.Qdrant" Version="13.6.5" />
 
 		<PackageReference Include="CommunityToolkit.Aspire.OllamaSharp" Version="13.6.1" />
 
@@ -80,10 +82,10 @@
 		<PackageReference Include="MailKit" Version="4.18.2" />
 		<PackageReference Include="MimeKit" Version="4.18.2" />
 
-		<PackageReference Include="TickerQ" Version="10.4.0" />
+		<!--<PackageReference Include="TickerQ" Version="10.4.0" />
 		<PackageReference Include="TickerQ.Dashboard" Version="10.4.0" />
 		<PackageReference Include="TickerQ.EntityFrameworkCore" Version="10.4.0" />
-		<PackageReference Include="TickerQ.Utilities" Version="10.4.0" />
+		<PackageReference Include="TickerQ.Utilities" Version="10.4.0" />-->
 
 	</ItemGroup>
 
@@ -99,6 +101,7 @@
 	<ItemGroup>
 		<Folder Include="logs\" />
 		<Folder Include="Metadata\" />
+		<Folder Include="LocalData\" />
 	</ItemGroup>
 
 	<ItemGroup>

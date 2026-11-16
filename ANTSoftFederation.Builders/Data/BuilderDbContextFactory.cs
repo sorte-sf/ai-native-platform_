@@ -28,7 +28,7 @@ public sealed class BuilderDbContextFactory : IDesignTimeDbContextFactory<Builde
 
     public BuilderDbContext CreateDbContext(string[] args)
     {
-        var connection = Environment.GetEnvironmentVariable("ConnectionStrings__SorteBuilderDb2026")
+        var connection = Environment.GetEnvironmentVariable("ConnectionStrings__SortePlatformBuilderDb2027")
             ?? Environment.GetEnvironmentVariable("ConnectionStrings__builders-db")
             ?? "Host=localhost;Port=5432;Database=sorte_builders;Username=postgres;Password=postgres";
 

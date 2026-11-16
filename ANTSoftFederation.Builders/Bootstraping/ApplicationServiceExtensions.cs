@@ -81,13 +81,13 @@ public static class ApplicationServiceExtensions
         builder.Services.AddHttpClient("blob-documents", client => client.Timeout = TimeSpan.FromMinutes(2));
 
         builder.Services.AddDbContext<BuilderDbContext>(options =>
-            options.UseNpgsql(builder.Configuration.GetConnectionString("SortePlatformBuilderDb2026")
+            options.UseNpgsql(builder.Configuration.GetConnectionString("SortePlatformBuilderDb2027")
                 ?? builder.Configuration.GetConnectionString("builders-db")
                 ?? builder.Configuration.GetConnectionString("ANTPortalDb") ?? throw new InvalidOperationException("Aspire PostgreSQL connection 'ANTPortalDb' is required."),
                 npgsql => npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
         builder.Services.AddDbContext<TenantRuntimeDbContext>(options =>
-            options.UseNpgsql(builder.Configuration.GetConnectionString("SortePlatformBuilderDb2026")
+            options.UseNpgsql(builder.Configuration.GetConnectionString("SortePlatformBuilderDb2027")
                 ?? builder.Configuration.GetConnectionString("builders-db")
                 ?? builder.Configuration.GetConnectionString("ANTPortalDb") ?? throw new InvalidOperationException("Aspire PostgreSQL connection 'ANTPortalDb' is required."),
                 npgsql => npgsql.UseVector()
@@ -292,9 +292,11 @@ public static class ApplicationServiceExtensions
         builder.Services.AddScoped<NotificationService>();
         builder.Services.AddScoped<PlatformActionDispatcher>();
         builder.Services.AddScoped<IScheduledJobActionDispatcher, ScheduledJobActionDispatcher>();
-        builder.Services.AddScoped<ScheduledJobTimeZoneService>();
-        builder.Services.Configure<ScheduledJobRetryOptions>(builder.Configuration.GetSection("ScheduledJobs:Retry"));
-        builder.Services.AddHostedService<ScheduledJobTickerReconciler>();
+        
+        //builder.Services.AddScoped<ScheduledJobTimeZoneService>();
+        //builder.Services.Configure<ScheduledJobRetryOptions>(builder.Configuration.GetSection("ScheduledJobs:Retry"));
+        //builder.Services.AddHostedService<ScheduledJobTickerReconciler>();
+
         builder.Services.AddScoped<IScheduledJobActionHandler, PlatformScheduledActionHandler>();
         builder.Services.AddScoped<IScheduledJobActionHandler, ScheduledNotificationActionHandler>();
         builder.Services.AddScoped<IScheduledJobActionHandler, ScheduledWorkflowActionHandler>();
@@ -324,7 +326,7 @@ public static class ApplicationServiceExtensions
               return dataSourceBuilder.Build();
           });*/
 
-        builder.Services.AddTickerQ(options =>
+       /* builder.Services.AddTickerQ(options =>
        {
            options.SetExceptionHandler<TickerExceptionHandler>();
            options.AddOperationalStore(efOptions =>
@@ -349,7 +351,7 @@ public static class ApplicationServiceExtensions
              o.WithBasicAuth("admin", "ChangeMe123!");
          });
 
-       });
+       });*/
 
         builder.Services
              .AddSignalR(options => options.EnableDetailedErrors = true)
@@ -388,7 +390,7 @@ public static class ApplicationServiceExtensions
     public static IServiceCollection AddDatabase<T>(this IServiceCollection services, IConfiguration configuration)
          where T : DbContext
     {
-        var connectionStr = configuration.GetConnectionString("SortePlatformBuilderDb2026")
+        var connectionStr = configuration.GetConnectionString("SortePlatformBuilderDb2027")
             ?? configuration.GetConnectionString("builders-db") 
             ?? configuration.GetConnectionString("DefaultConnection");
 

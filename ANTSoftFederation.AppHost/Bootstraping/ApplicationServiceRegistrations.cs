@@ -1,9 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using SorteFederation.AppHost.Models;
-using SorteFederation.AppHost.resources;
-
+﻿
 namespace SorteFederation.AppHost.Bootstraping;
 
 public static class ApplicationServiceRegistrations
@@ -12,18 +7,16 @@ public static class ApplicationServiceRegistrations
     {
 
         builder.Configuration.SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
-                .AddEnvironmentVariables();
+               .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+               .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+               .AddEnvironmentVariables();
 
-        var postgresUsr = builder.AddParameter("postgres-user", secret: true);
-        var postgresPwd = builder.AddParameter("postgres-password", secret: true);
-        var jwtSigningKey = builder.AddParameter("jwt-signing-key", secret: true);
-        var grafanaAdminUser = builder.AddParameter("grafana-admin-user");
-        var grafanaAdminPassword = builder.AddParameter("grafana-admin-password", secret: true);
+        IResourceBuilder<ParameterResource> postgresUsr = builder.AddParameter("postgres-user", secret: true);
+        IResourceBuilder<ParameterResource> postgresPwd = builder.AddParameter("postgres-password", secret: true);
+        IResourceBuilder<ParameterResource> jwtSigningKey = builder.AddParameter("jwt-signing-key", secret: true);
 
-        var rabbitUser = builder.AddParameter("rabbitmq-user", secret: true);
-        var rabbitPwd = builder.AddParameter("rabbitmq-password", secret: true);
+        IResourceBuilder<ParameterResource> rabbitUser = builder.AddParameter("rabbitmq-user", secret: true);
+        IResourceBuilder<ParameterResource> rabbitPwd = builder.AddParameter("rabbitmq-password", secret: true);
 
         static int GetPort(IConfiguration configuration, string key, int fallback) => int.TryParse(configuration[key], out var port) && port is > 0 and <= 65535 ? port : fallback;
 
@@ -31,25 +24,6 @@ public static class ApplicationServiceRegistrations
                              .WithDataVolume("mailpit-data")
                              .ExcludeFromManifest()
                              ;
-
-       /* var prometheus = builder.AddContainer("prometheus", "prom/prometheus")
-                                .WithArgs("--config.file=/etc/prometheus/prometheus.yml", "--web.enable-otlp-receiver")
-                                .WithBindMount("./prometheus", "/etc/prometheus", isReadOnly: false)
-                                .WithHttpEndpoint(port: 9090, targetPort: 9090, name: "http")
-                                .WithLifetime(ContainerLifetime.Persistent)
-                                .ExcludeFromManifest()
-                                ;
-
-        var grafana = builder.AddContainer("grafana", "grafana/grafana")
-                             .WithBindMount("./grafana/dashboards", "/var/lib/grafana/dashboards", isReadOnly: false)
-                             .WithBindMount("./grafana/provisioning", "/etc/grafana/provisioning", isReadOnly: false)
-                             .WithHttpEndpoint(port: 3000, targetPort: 3000, name: "http")
-                             .WithEnvironment("GF_SECURITY_ADMIN_USER", grafanaAdminUser)
-                             .WithEnvironment("GF_SECURITY_ADMIN_PASSWORD", grafanaAdminPassword)
-                             .WaitFor(prometheus)
-                             .WithLifetime(ContainerLifetime.Persistent)
-                             .ExcludeFromManifest()
-                              ;*/
 
         var dockerComposeEnv = builder.AddDockerComposeEnvironment("compose")
                  .WithProperties(env =>
@@ -93,50 +67,47 @@ public static class ApplicationServiceRegistrations
             }
         }
 
-        var cache = builder.AddRedis("cache")
-                           .WithIconName("memory")
-                           .WithRedisInsight(a =>
-                           {
-                               a.WithContainerName("redis-insight");
-                           })
-                           .WithRedisCommander(c =>
-                           {
-                               c.WithContainerName("redis-commander");
-                           })
-                           .WithLifetime(ContainerLifetime.Persistent)
-                           ;
+        IResourceBuilder<RedisResource> cache = builder.AddRedis("cache").WithIconName("memory").WithRedisInsight(delegate (IResourceBuilder<RedisInsightResource> a)
+        {
+            a.WithContainerName("redis-insight");
+        })
+       .WithRedisCommander(delegate (IResourceBuilder<RedisCommanderResource> c)
+       {
+           c.WithContainerName("redis-commander");
+       })
+       .WithLifetime(ContainerLifetime.Persistent);
 
-        var postgres = builder.AddPostgres("SorteMasterDatabase", userName: postgresUsr, password: postgresPwd, port: 5432)
-                              .WithDataVolume(name: "sorte_masterdb_vol", isReadOnly: false)
-                              .WithRepl()
-                              .WithPgAdmin(pgAdmin =>
-                              {
+        IResourceBuilder<RabbitMQServerResource> messaging = RabbitMQBuilderExtensions
+            .AddRabbitMQ(port: GetPort(builder.Configuration, "RabbitMQ:Port", 5672), builder: builder, name: "messaging", userName: rabbitUser, password: rabbitPwd)
+            .WithManagementPlugin(15672)
+            .WithContainerName("sorte-rabbitmq")
+            .WithEnvironment("TZ", "Europe/Istanbul")
+            .WithEnvironment("RABBITMQ_DEFAULT_VHOST", "/")
+            .WithEnvironment("RABBITMQ_DEFAULT_USER", rabbitUser)
+            .WithEnvironment("RABBITMQ_DEFAULT_PASSWORD", rabbitPwd)
+            .WithDataVolume("sorte-rabbitmq_vol")
+            .WithLifetime(ContainerLifetime.Persistent);
+
+        /* var postgres = builder.AddPostgres("SorteMasterDatabase", userName: postgresUsr, password: postgresPwd, port: 5432)
+                               .WithDataVolume(name: "sorte_masterdb_vol", isReadOnly: false)
+                               .WithRepl()
+                               .WithPgAdmin(pgAdmin =>
+                               {
                                   pgAdmin.WithHostPort(5050);
                                   pgAdmin.WithContainerName("pgadmin");
                                   pgAdmin.WithUrlForEndpoint("http", url => url.DisplayText = "Postgres-Admin");
                                   pgAdmin.WithLifetime(ContainerLifetime.Persistent);
-                              })
-                              .WithImage("pgvector/pgvector", "pg17")
-                              .WithEnvironment("TZ", "Europe/Turkey")
-                              .OnConnectionStringAvailable(async (resource, evt, cancellationToken) =>
-                              {
+                               })
+                               .WithImage("pgvector/pgvector", "pg18")
+                               .WithEnvironment("TZ", "Europe/Turkey")
+                               .OnConnectionStringAvailable(async (resource, evt, cancellationToken) =>
+                               {
                                   var logger = evt.Services.GetRequiredService<ILogger<Program>>();
                                   logger.LogInformation("✅ PostgreSQL with pgvector ready: {Name}", resource.Name);
-                              })
-                              .WithLifetime(ContainerLifetime.Persistent)
-                             ;
-
-        var rabbitMqPort = GetPort(builder.Configuration, "RabbitMQ:Port", 5672);
-        var messaging = builder.AddRabbitMQ("messaging", userName: rabbitUser, password: rabbitPwd, port: rabbitMqPort)
-                               .WithManagementPlugin(15672)
-                               .WithContainerName("sorte-rabbitmq")
-                               .WithEnvironment("TZ", "Europe/Turkey")
-                               .WithEnvironment("RABBITMQ_DEFAULT_VHOST", "/")
-                               .WithEnvironment("RABBITMQ_DEFAULT_USER", rabbitUser)
-                               .WithEnvironment("RABBITMQ_DEFAULT_PASSWORD", rabbitPwd)
-                               .WithDataVolume("sorte-rabbitmq_vol")
+                               })
                                .WithLifetime(ContainerLifetime.Persistent)
-                              ;
+                             ;*/
+
 
         var ownerEmail = builder.AddParameter("n8n-owner-email");
         var ownerPasswordHash = builder.AddParameter("n8n-owner-password-hash", secret: true);
@@ -156,24 +127,23 @@ public static class ApplicationServiceRegistrations
                          .WithLifetime(ContainerLifetime.Persistent)
                          ;
 
-        var realtimeService = builder.AddProject<Projects.SorteFederation_Realtime>("sorte-realtime-service")
-                               .WithEndpoint("http", endpoint =>
-                               {
-                                   endpoint.IsProxied = false;
-                               })
-                               .WithEnvironment(context =>
-                               {
-                                   context.EnvironmentVariables["Auth__Jwt__Issuer"] = "sorte.portal";
-                                   context.EnvironmentVariables["Auth__Jwt__Audience"] = "sorte";
-                                   context.EnvironmentVariables["Auth__Jwt__Key"] = jwtSigningKey;
-
-                                   context.EnvironmentVariables["RABBITMQ_DEFAULT_USER"] = rabbitUser;
-                                   context.EnvironmentVariables["RABBITMQ_DEFAULT_PASSWORD"] = rabbitPwd;
-                               })
-                               .WithReference(messaging)
-                               .WaitFor(messaging)
-                               .WithOtlpExporter()
-                               ;
+        IResourceBuilder<ProjectResource> realtimeService = builder.AddProject<SorteFederation_Realtime>("sorte-realtime-service")
+            .WithHttpHealthCheck("/health", endpointName: "http")
+            .WithEndpoint("http", delegate (EndpointAnnotation endpoint)
+        {
+            endpoint.IsProxied = false;
+        }).WithEnvironment(delegate (EnvironmentCallbackContext context)
+        {
+            context.EnvironmentVariables["Auth__Jwt__Issuer"] = "sorte.portal";
+            context.EnvironmentVariables["Auth__Jwt__Audience"] = "sorte";
+            context.EnvironmentVariables["Auth__Jwt__Key"] = jwtSigningKey.Resource;
+            context.EnvironmentVariables["RABBITMQ_DEFAULT_USER"] = rabbitUser.Resource;
+            context.EnvironmentVariables["RABBITMQ_DEFAULT_PASSWORD"] = rabbitPwd.Resource;
+        })
+        .WithReference(messaging)
+        .WaitFor(messaging)
+        .WithOtlpExporter()
+        ;
 
         var portainerAgentToken = builder.AddParameter("portainer-agent-token", secret: true);
         var portainer = builder.AddContainer("portainer", "portainer/portainer-ce", "lts")
@@ -186,149 +156,155 @@ public static class ApplicationServiceRegistrations
                                .WithLifetime(ContainerLifetime.Persistent)
                                ;
 
-        var masterDb = builder.AddPostgres("sorte-platform-portal-db")
-                              .WithPgAdmin()
-                              .WithDataVolume("sorte-c0f1ef2048-portal-postgres-data")
-                              .AddDatabase("SortePlatformDb2027");
+        IResourceBuilder<OllamaResource> chatModel = builder.AddOllama("sorte-platform-ollama", 11434)
+             .WithLifetime(ContainerLifetime.Persistent).WithDataVolume()
+             .WithOtlpExporter();
+
+        var ollamaChatModel = chatModel.AddModel("ollama-chat", "qwen3:8b");
+        var embeddingModel = chatModel.AddModel("ollama-embeddings", "qwen3-embedding:0.6b");
+
+        var portalPostgres = builder.AddPostgres("sorte-platform-portal-db", builder.ExecutionContext.IsPublishMode ? postgresUsr : null, builder.ExecutionContext.IsPublishMode ? postgresPwd : null).WithPgAdmin()
+            .WithImage("pgvector/pgvector", "pg18")
+            .WithVolume("sorte-platform-portal-data", "/var/lib/postgresql")
+            .WithLifetime(ContainerLifetime.Persistent);
+
+        var portalDb = portalPostgres.AddDatabase("SortePlatformDb2027");
+
+        IResourceBuilder<ProjectResource> portalService = builder.AddProject<SorteFederation_Portal>("sorte-portal-service").WithHttpHealthCheck("/health", endpointName: "http").WithEndpoint("http", delegate (EndpointAnnotation endpoint)
+        {
+            endpoint.IsProxied = false;
+        }).WithExternalHttpEndpoints()
+            .WithUrlForEndpoint("http", (EndpointReference e) => new ResourceUrlAnnotation
+            {
+                Url = "/scalar",
+                DisplayText = "Sorte Portal API Docs."
+            })
+            .WithEnvironment(delegate (EnvironmentCallbackContext context)
+            {
+                context.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = builder.Environment.EnvironmentName;
+                context.EnvironmentVariables["Auth__Jwt__Issuer"] = "sorte.portal";
+                context.EnvironmentVariables["Auth__Jwt__Audience"] = "sorte";
+                context.EnvironmentVariables["Auth__Jwt__Key"] = jwtSigningKey.Resource;
+                context.EnvironmentVariables["POSTGRES_HOST"] = portalPostgres.Resource.PrimaryEndpoint.Property(EndpointProperty.Host);
+                context.EnvironmentVariables["POSTGRES_PORT"] = portalPostgres.Resource.PrimaryEndpoint.Property(EndpointProperty.Port);
+                context.EnvironmentVariables["POSTGRES_USER"] = postgresUsr;
+                context.EnvironmentVariables["POSTGRES_PASSWORD"] = postgresPwd;
+                context.EnvironmentVariables["POSTGRES_DATABASE"] = portalDb.Resource.DatabaseName;
+                context.EnvironmentVariables["RABBITMQ_DEFAULT_USER"] = rabbitUser.Resource;
+                context.EnvironmentVariables["RABBITMQ_DEFAULT_PASSWORD"] = rabbitPwd.Resource;
+                context.EnvironmentVariables["JwtSettings__Issuer"] = "sorte.portal";
+                context.EnvironmentVariables["JwtSettings__Audience"] = "sorte";
+                context.EnvironmentVariables["JwtSettings__SecretKey"] = jwtSigningKey.Resource;
+            })
+            .WithReference(portalDb)
+            .WaitFor(portalPostgres)
+            .WithReference(cache)
+            .WaitFor(cache)
+            .WithReference(messaging)
+            .WaitFor(messaging)
+            .WithOtlpExporter()
+            .WithReference(realtimeService)
+            ;
          
-        var portalApi = builder.AddProject<Projects.SorteFederation_Portal>("sorte-portal-service")
-                               .WithEndpoint("http", endpoint =>
-                               {
-                                   //  endpoint.Port = portalApiHttpPort;
-                                   //   endpoint.TargetPort = portalApiHttpPort;
-                                   endpoint.IsProxied = false;
-                               })
-                               .WithExternalHttpEndpoints()
-                               .WithUrlForEndpoint("http", (e) =>
-                               {
-                                   return new() { Url = "/scalar", DisplayText = "Sorte Portal API Docs." };
-                               })
-                               .WithEnvironment(context =>
-                               {
-                                   context.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = builder.Environment.EnvironmentName;
-                                   context.EnvironmentVariables["Auth__Jwt__Issuer"] = "sorte.portal";
-                                   context.EnvironmentVariables["Auth__Jwt__Audience"] = "sorte";
-                                   context.EnvironmentVariables["Auth__Jwt__Key"] = jwtSigningKey;
+        var platformBuilderPostgres = builder.AddPostgres("sorte-platform-builder-db", builder.ExecutionContext.IsPublishMode ? postgresUsr : null, builder.ExecutionContext.IsPublishMode ? postgresPwd : null).WithPgAdmin()
+            .WithImage("pgvector/pgvector", "pg18")
+            .WithVolume("sorte-platform-builder-data", "/var/lib/postgresql").WithLifetime(ContainerLifetime.Persistent);
 
-                                   context.EnvironmentVariables["POSTGRES_HOST"] = postgres.Resource.PrimaryEndpoint.Property(EndpointProperty.Host);
-                                   context.EnvironmentVariables["POSTGRES_PORT"] = postgres.Resource.PrimaryEndpoint.Property(EndpointProperty.Port);
-                                   context.EnvironmentVariables["POSTGRES_USER"] = postgres.Resource.UserNameParameter;
-                                   context.EnvironmentVariables["POSTGRES_PASSWORD"] = postgres.Resource.PasswordParameter;
-                                   context.EnvironmentVariables["POSTGRES_DATABASE"] = masterDb.Resource.DatabaseName;
+        var platformBuilderDb = platformBuilderPostgres.AddDatabase("SortePlatformBuilderDb2027");
 
-                                   context.EnvironmentVariables["RABBITMQ_DEFAULT_USER"] = rabbitUser;
-                                   context.EnvironmentVariables["RABBITMQ_DEFAULT_PASSWORD"] = rabbitPwd;
+        IResourceBuilder<ProjectResource> platformBuilderService = builder.AddProject<Projects.SorteFederation_Builders>("sorte-portal-builder")
+            .WithHttpHealthCheck("/health", endpointName: "http")
+            .WithEndpoint("http", delegate (EndpointAnnotation endpoint)
+        {
+            endpoint.IsProxied = false;
+        }).WithExternalHttpEndpoints()
+            .WithUrlForEndpoint("http", (EndpointReference e) => new ResourceUrlAnnotation
+            {
+                Url = "/scalar",
+                DisplayText = "Sorte Builder API Docs."
+            })
+            .WithUrlForEndpoint("http", (EndpointReference e) => new ResourceUrlAnnotation
+            {
+                Url = "/hangfire",
+                
+                DisplayText = "Sorte Hangfire Docs."
+            })
 
-                                   context.EnvironmentVariables["JwtSettings__Issuer"] = "sorte.portal";
-                                   context.EnvironmentVariables["JwtSettings__Audience"] = "sorte";
-                                   context.EnvironmentVariables["JwtSettings__SecretKey"] = jwtSigningKey;
-                               })
-                               .WithReference(masterDb).WaitFor(masterDb)
-                               .WithReference(cache)
-                               .WithReference(messaging).WaitFor(messaging)
-                               .WithOtlpExporter()
-                               .WithReference(realtimeService)
-                            ;
+            .WithEnvironment(delegate (EnvironmentCallbackContext context)
+            {
+                context.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = builder.Environment.EnvironmentName;
+                context.EnvironmentVariables["Auth__Jwt__Issuer"] = "sorte.portal";
+                context.EnvironmentVariables["Auth__Jwt__Audience"] = "sorte";
+                context.EnvironmentVariables["Auth__Jwt__Key"] = jwtSigningKey.Resource;
+                context.EnvironmentVariables["POSTGRES_HOST"] = platformBuilderPostgres.Resource.PrimaryEndpoint.Property(EndpointProperty.Host);
+                context.EnvironmentVariables["POSTGRES_PORT"] = platformBuilderPostgres.Resource.PrimaryEndpoint.Property(EndpointProperty.Port);
+                context.EnvironmentVariables["POSTGRES_USER"] = postgresUsr;
+                context.EnvironmentVariables["POSTGRES_PASSWORD"] = postgresPwd;
+                context.EnvironmentVariables["POSTGRES_DATABASE"] = platformBuilderDb.Resource.DatabaseName;
+                context.EnvironmentVariables["RABBITMQ_DEFAULT_USER"] = rabbitUser.Resource;
+                context.EnvironmentVariables["RABBITMQ_DEFAULT_PASSWORD"] = rabbitPwd.Resource;
+                context.EnvironmentVariables["JwtSettings__Issuer"] = "sorte.portal";
+                context.EnvironmentVariables["JwtSettings__Audience"] = "sorte";
+                context.EnvironmentVariables["JwtSettings__SecretKey"] = jwtSigningKey.Resource;
+            })
+            .WithReference(platformBuilderDb)
+            .WithReference(ollamaChatModel)
+            .WithReference(embeddingModel)
+            .WaitFor(platformBuilderPostgres)
+            .WithReference(cache)
+            .WaitFor(cache)
+            .WithReference(messaging)
+            .WaitFor(messaging)
+            .WithOtlpExporter()
+            .WithReference(realtimeService)
+            ;         
 
-        var ollama = builder.AddOllama("sorte-ollama", port: 11434)
-                            .WithLifetime(ContainerLifetime.Persistent)
-                            .WithDataVolume()
-                            //.WithGPUSupport()
-                            //.WithOpenWebUI()
-                            .WithOtlpExporter()
-                            ;
+        var platformBlobPostgres = builder.AddPostgres("sorte-platform-blob-db", 
+            builder.ExecutionContext.IsPublishMode ? postgresUsr : null, builder.ExecutionContext.IsPublishMode ? postgresPwd : null)
+            .WithPgAdmin()
+            .WithImage("pgvector/pgvector", "pg18")
+            .WithVolume("sorte-platform-blob-data", "/var/lib/postgresql")
+            .WithLifetime(ContainerLifetime.Persistent);
 
-        var chatModel = ollama.AddModel("ollama-chat", "qwen3:8b");
-        var embeddingModel = ollama.AddModel("ollama-embeddings", "qwen3-embedding:0.6b");
+        var blobDb = platformBlobPostgres.AddDatabase("SortePlatformBlobDb2027");
 
-        var builderDb = builder.AddPostgres("sorte-platform-builder-db")
-                               .WithPgAdmin()
-                               .WithDataVolume("sorte-c0f1ef2048-builder-postgres-data")
-                               .AddDatabase("SortePlatformBuilderDb2026");
-         
-        var portalBuilder = builder.AddProject<Projects.SorteFederation_Builders>("sorte-portal-builder")
-                            .WithEndpoint("http", endpoint =>
-                            {
-                                endpoint.IsProxied = false;
-                            })
-                            .WithExternalHttpEndpoints()
-                            .WithUrlForEndpoint("http", (e) =>
-                            {
-                                return new() { Url = "/scalar", DisplayText = "Sorte Builder API Docs." };
-                            })
-                            .WithUrlForEndpoint("http", (e) =>
-                            {
-                                return new()
-                                {
-                                    Url = "/sorte-q",
-                                    DisplayText = "Sorte TickerQ Dashboard."
-                                };
-                            })
-                            .WithEnvironment(context =>
-                            {
-                                context.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = builder.Environment.EnvironmentName;
-                                context.EnvironmentVariables["Auth__Jwt__Issuer"] = "sorte.portal";
-                                context.EnvironmentVariables["Auth__Jwt__Audience"] = "sorte";
-                                context.EnvironmentVariables["Auth__Jwt__Key"] = jwtSigningKey;
+        IResourceBuilder<ProjectResource> platformBlobService = builder.AddProject<Projects.SorteFederation_BlobApi>("sorte-blob-builder")
+            .WithHttpHealthCheck("/health", endpointName: "http")
+            .WithEndpoint("http", delegate (EndpointAnnotation endpoint)
+            {
+                endpoint.IsProxied = false;
+            }).WithExternalHttpEndpoints()
+            .WithUrlForEndpoint("http", (EndpointReference e) => new ResourceUrlAnnotation
+            {
+                Url = "/scalar",
+                DisplayText = "Sorte Blob API Docs."
+            })
+            .WithEnvironment(delegate (EnvironmentCallbackContext context)
+            {
+                context.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = builder.Environment.EnvironmentName;
+                context.EnvironmentVariables["Auth__Jwt__Issuer"] = "sorte.portal";
+                context.EnvironmentVariables["Auth__Jwt__Audience"] = "sorte";
+                context.EnvironmentVariables["Auth__Jwt__Key"] = jwtSigningKey.Resource;
+                context.EnvironmentVariables["POSTGRES_HOST"] = platformBlobPostgres.Resource.PrimaryEndpoint.Property(EndpointProperty.Host);
+                context.EnvironmentVariables["POSTGRES_PORT"] = platformBlobPostgres.Resource.PrimaryEndpoint.Property(EndpointProperty.Port);
+                context.EnvironmentVariables["POSTGRES_USER"] = postgresUsr;
+                context.EnvironmentVariables["POSTGRES_PASSWORD"] = postgresPwd;
+                context.EnvironmentVariables["POSTGRES_DATABASE"] = blobDb.Resource.DatabaseName;
+                context.EnvironmentVariables["RABBITMQ_DEFAULT_USER"] = rabbitUser.Resource;
+                context.EnvironmentVariables["RABBITMQ_DEFAULT_PASSWORD"] = rabbitPwd.Resource;
+                context.EnvironmentVariables["JwtSettings__Issuer"] = "sorte.portal";
+                context.EnvironmentVariables["JwtSettings__Audience"] = "sorte";
+                context.EnvironmentVariables["JwtSettings__SecretKey"] = jwtSigningKey.Resource;
+            })
+            .WithReference(blobDb)
+            .WaitFor(platformBlobPostgres)
+            .WithReference(cache)
+            .WaitFor(cache)
+            .WithReference(messaging)
+            .WaitFor(messaging)
+            .WithOtlpExporter() 
+            ;
 
-                                context.EnvironmentVariables["POSTGRES_HOST"] = postgres.Resource.PrimaryEndpoint.Property(EndpointProperty.Host);
-                                context.EnvironmentVariables["POSTGRES_PORT"] = postgres.Resource.PrimaryEndpoint.Property(EndpointProperty.Port);
-                                context.EnvironmentVariables["POSTGRES_USER"] = postgres.Resource.UserNameParameter;
-                                context.EnvironmentVariables["POSTGRES_PASSWORD"] = postgres.Resource.PasswordParameter;
-                                context.EnvironmentVariables["POSTGRES_DATABASE"] = builderDb.Resource.DatabaseName;
-
-                                context.EnvironmentVariables["RABBITMQ_DEFAULT_USER"] = rabbitUser;
-                                context.EnvironmentVariables["RABBITMQ_DEFAULT_PASSWORD"] = rabbitPwd;
-                            })
-                            .WithReference(builderDb).WaitFor(builderDb)
-                            .WithReference(cache)
-                            .WithReference(embeddingModel).WaitFor(embeddingModel)
-                            .WithReference(chatModel).WaitFor(chatModel)
-                            .WithReference(messaging).WaitFor(messaging)
-                            .WithEnvironment("N8N__BaseUrl", n8n.GetEndpoint("n8n-ui"))
-                            .WithEnvironment("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "http://prometheus:9090/api/v1/otlp/v1/metrics")
-                            .WithEnvironment("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", "http/protobuf")
-                            .WithOtlpExporter()
-                          //  .WaitFor(prometheus)
-                            .WithReference(mailpit)
-                            .WithReference(realtimeService)
-                         ;
-
-        var blobDb = builder.AddPostgres("sorte-platform-blob-db").WithPgAdmin().WithDataVolume("sorte-c0f1ef2048-builder-postgres-data").AddDatabase("SortePlatformBlob2026Db");
-         
-        var blobservice = builder.AddProject<Projects.SorteFederation_BlobApi>("sorte-blob-service")
-                                 .WithEndpoint("http", endpoint =>
-                                 {
-                                     // endpoint.Port = blobServiceHttpPort;
-                                     //   endpoint.TargetPort = blobServiceHttpPort;
-                                     endpoint.IsProxied = false;
-                                 })
-                                 .WithEnvironment(context =>
-                                 {
-                                     context.EnvironmentVariables["POSTGRES_HOST"] = postgres.Resource.PrimaryEndpoint.Property(EndpointProperty.Host);
-                                     context.EnvironmentVariables["POSTGRES_PORT"] = postgres.Resource.PrimaryEndpoint.Property(EndpointProperty.Port);
-                                     context.EnvironmentVariables["POSTGRES_USER"] = postgres.Resource.UserNameParameter;
-                                     context.EnvironmentVariables["POSTGRES_PASSWORD"] = postgres.Resource.PasswordParameter;
-                                     context.EnvironmentVariables["POSTGRES_DATABASE"] = blobDb.Resource.DatabaseName;
-
-                                     context.EnvironmentVariables["RABBITMQ_DEFAULT_USER"] = rabbitUser;
-                                     context.EnvironmentVariables["RABBITMQ_DEFAULT_PASSWORD"] = rabbitPwd;
-
-                                 })
-                                 .WithEnvironment("ASPNETCORE_ENVIRONMENT", builder.Environment.EnvironmentName)
-                                 .WithEnvironment("Auth__Jwt__Issuer", "sorte.portal")
-                                 .WithEnvironment("Auth__Jwt__Audience", "sorte")
-                                 .WithEnvironment("Auth__Jwt__Key", jwtSigningKey)
-                                 .WithExternalHttpEndpoints()
-                                 .WithUrlForEndpoint("http", (e) =>
-                                 {
-                                     return new() { Url = "/scalar", DisplayText = "Blob API Docs." };
-                                 })
-                                 .WithVolume("blob_contents", "/Contents", env: "BLOB_CONTENTS_PATH")
-                                 .WithReference(messaging).WaitFor(messaging)
-                                 .WithReference(blobDb).WaitFor(blobDb)
-                                 .WithOtlpExporter()
-                              ;
 
         var designStudioService = builder.AddProject<Projects.SorteFederation_DesignerStudio>("sorte-designer-studio-service")
                                  .WithEndpoint("http", endpoint =>
@@ -352,9 +328,7 @@ public static class ApplicationServiceRegistrations
         if (figmaExternalService is not null)
         {
             designStudioService.WithReference(figmaExternalService);
-        }
-
-        portalBuilder.WithReference(blobservice).WaitFor(blobservice);
+        } 
 
         var gateway = builder.AddProject<Projects.SorteFederation_LoadBalancing>("sorte-gateway")
                              .WithEndpoint("http", endpoint =>
@@ -365,18 +339,18 @@ public static class ApplicationServiceRegistrations
                              .WithEnvironment("JwtSettings__Issuer", "sorte.portal")
                              .WithEnvironment("JwtSettings__Audience", "sorte")
                              .WithEnvironment("JwtSettings__SecretKey", jwtSigningKey)
-                             .WithUrlForEndpoint("http", url => url.DisplayText = "Gateway-Service")
-                             .WithReference(portalApi)
-                             .WithReference(portalBuilder)
-                             .WithReference(blobservice)
+                             .WithUrlForEndpoint("http", url => url.DisplayText = "Gateway-Service") 
+                             .WithReference(portalService)
+                             .WithReference(platformBuilderService)
+                             .WaitFor(platformBuilderService)
+                             .WithReference(platformBlobService)
                              .WithReference(designStudioService)
                              .WithReference(realtimeService)
                              .WithOtlpExporter()
                               ;
 
         var studio = builder.AddExecutable("sorte-builder-studio", "npm.cmd", "../../clients/AntsoftBuilder", "run", "start:aspire")
-               .WithReference(portalBuilder)
-               .WaitFor(portalBuilder)
+               .WithReference(portalService).WaitFor(portalService)
                .WithHttpEndpoint(port: 4202, targetPort: 4202, isProxied: false)
                .WithExternalHttpEndpoints()
                .ExcludeFromManifest()
@@ -395,8 +369,8 @@ public static class ApplicationServiceRegistrations
         var portalUi = builder.AddExecutable("sorte-portal-ui", "npm.cmd", "../../clients/ANTSoftPortal", "run", "start:aspire")
               .WithReference(gateway)
               .WaitFor(gateway)
-              .WithReference(portalApi)
-              .WaitFor(portalApi)
+              .WithReference(portalService)
+              .WaitFor(portalService)
               .WithHttpEndpoint(port: 4204, targetPort: 4204, isProxied: false)
               .WithExternalHttpEndpoints()
               .ExcludeFromManifest()

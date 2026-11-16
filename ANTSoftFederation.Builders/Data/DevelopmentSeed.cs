@@ -88,4 +88,5 @@ public static class DevelopmentSeed
         db.Rules.Add(rule);
         await db.SaveChangesAsync(token);
     }
+
 }

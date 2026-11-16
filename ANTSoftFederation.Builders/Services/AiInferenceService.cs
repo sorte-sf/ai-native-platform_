@@ -38,11 +38,16 @@ public sealed class AiInferenceService(
                 ? await CompleteLocalAsync(policy, systemPrompt, userPrompt, maximumOutput, jsonResponse, token)
                 : await CompleteCloudAsync(policy, systemPrompt, userPrompt, maximumOutput, jsonResponse, token);
             timer.Stop();
+
             var inputTokens = result.InputTokens > 0 ? result.InputTokens : estimatedInput;
+
             var outputTokens = result.OutputTokens > 0 ? result.OutputTokens : AiUsageMeter.EstimateTokens(result.Content ?? "");
+
             var estimated = result.IsEstimated || result.InputTokens <= 0 || result.OutputTokens <= 0;
+
             await usage.RecordAsync(policy, reservation, applicationId, feature, result.Provider, result.Model, inputTokens,
                 outputTokens, estimated, "completed", null, timer.ElapsedMilliseconds, token);
+
             return result with { InputTokens = inputTokens, OutputTokens = outputTokens, IsEstimated = estimated };
         }
         catch (Exception exception)

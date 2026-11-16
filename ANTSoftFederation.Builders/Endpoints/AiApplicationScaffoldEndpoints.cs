@@ -148,8 +148,7 @@ public sealed class AiApplicationScaffoldEndpoints : IAppEndPoints
 
     private static bool CanCreate(ClaimsPrincipal user, Guid tenantId)
     {
-        if (tenantId == Guid.Empty || user.Identity?.IsAuthenticated != true ||
-            !user.IsInRole(BuilderRoleNames.SystemAdmin) && !user.IsInRole(BuilderRoleNames.TenantAdmin) && !user.IsInRole(BuilderRoleNames.Developer)) return false;
+        if (tenantId == Guid.Empty || user.Identity?.IsAuthenticated != true) return false;
         if (user.IsInRole(BuilderRoleNames.SystemAdmin)) return true;
         return Guid.TryParse(user.FindFirstValue("tenant_id") ?? user.FindFirstValue("company_id") ?? user.FindFirstValue("companyId"), out var claimTenant)
             && claimTenant == tenantId;

@@ -15,15 +15,15 @@
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
 		<PackageReference Include="Microsoft.Extensions.AI" Version="10.11.0" />
 		<PackageReference Include="NAudio" Version="3.3.0" />
-		<PackageReference Include="Scalar.AspNetCore" Version="2.19.0" />
+		<PackageReference Include="Scalar.AspNetCore" Version="2.21.0" />
 
 		<PackageReference Include="Aspire.Hosting.AppHost" Version="13.6.4" />
-		<PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.6.4" />
-		<PackageReference Include="Aspire.Hosting.RabbitMQ" Version="13.6.4" />
-		<PackageReference Include="Aspire.RabbitMQ.Client" Version="13.6.4" />
-		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.6.4" />
-		<PackageReference Include="Aspire.StackExchange.Redis.OutputCaching" Version="13.6.4" />
-		<PackageReference Include="Aspire.Hosting.Redis" Version="13.6.4" />
+		<PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.6.5" />
+		<PackageReference Include="Aspire.Hosting.RabbitMQ" Version="13.6.5" />
+		<PackageReference Include="Aspire.RabbitMQ.Client" Version="13.6.5" />
+		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.6.5" />
+		<PackageReference Include="Aspire.StackExchange.Redis.OutputCaching" Version="13.6.5" />
+		<PackageReference Include="Aspire.Hosting.Redis" Version="13.6.5" />
 
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.14" />

@@ -1,15 +1,9 @@
 
-using SorteFederation.Builders.Hubs;
-using SorteFederation.Builders.Services;
-using SorteFederation.Shared.TemplateCatalog;
-using Microsoft.AspNetCore.Http.Connections;
-using TickerQ.DependencyInjection;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-builder.Services.AddOpenApi(); 
+builder.Services.AddOpenApi();
 builder.AddApplicationServices();
 builder.Services.AddSingleton<PlatformPluginRegistry>();
 builder.Services.AddProblemDetails();
@@ -68,13 +62,13 @@ builder.Services.AddHttpClient("builders-connectors", client =>
 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
 
 builder.Services.AddDbContext<BuilderDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("SorteBuilderDb2026")
+    options.UseNpgsql(builder.Configuration.GetConnectionString("SortePlatformBuilderDb2027")
         ?? builder.Configuration.GetConnectionString("builders-db")
         ?? builder.Configuration.GetConnectionString("ANTPortalDb") ?? throw new InvalidOperationException("Aspire PostgreSQL connection 'ANTPortalDb' is required."),
         npgsql => npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
 builder.Services.AddDbContext<TenantRuntimeDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("SorteBuilderDb2026")
+    options.UseNpgsql(builder.Configuration.GetConnectionString("SortePlatformBuilderDb2027")
         ?? builder.Configuration.GetConnectionString("builders-db")
         ?? builder.Configuration.GetConnectionString("ANTPortalDb") ?? throw new InvalidOperationException("Aspire PostgreSQL connection 'ANTPortalDb' is required."),
         npgsql => npgsql.MigrationsAssembly(typeof(TenantRuntimeDbContext).Assembly.FullName)
@@ -91,6 +85,18 @@ if (!File.Exists(Path.Combine(spaRoot, "index.html")))
 
 builder.WebHost.UseWebRoot(spaRoot);
 builder.Services.AddSpaStaticFiles(configuration => configuration.RootPath = spaRoot);
+
+//builder.Services.AddDbContext<BlobDbContext>(x => x.UseSqlite("DataSource=./LocalData/JobRunners.db")).AddAntiforgery();
+
+
+/*builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+//    .UseSQLiteStorage("DataSource=./LocalData/JobRunners.db")
+   );
+
+builder.Services.AddHangfireServer(options => options.SchedulePollingInterval = TimeSpan.FromSeconds(1)); */
 
 var app = builder.Build();
 
@@ -138,8 +144,6 @@ app.UseExceptionHandler(errorApp => errorApp.Run(async context =>
     options.Transports = HttpTransportType.WebSockets | HttpTransportType.LongPolling | HttpTransportType.ServerSentEvents;
 });*/
 
-
-
 app.UseHttpsRedirection();
 
 app.UseRouting();
@@ -172,13 +176,13 @@ app.Use(async (context, next) =>
     }
     await next();
 });
- 
+
 app.UseRateLimiter();
 app.Use(async (context, next) =>
 {
     context.Response.Headers["X-Correlation-Id"] = context.TraceIdentifier;
     await next();
-}); 
+});
 
 await using (var scope = app.Services.CreateAsyncScope())
 {
@@ -194,7 +198,7 @@ await using (var scope = app.Services.CreateAsyncScope())
     //    await DevelopmentSeed.SeedAsync(metadataDb);
 }
 
-app.UseTickerQ();
+// app.UseTickerQ();
 
 app.MapScalarApiReference(o =>
 {
@@ -235,12 +239,12 @@ var buildersApi = app.MapGroup("/api/v1")
                      .AddEndpointFilter<TenantAccessEndpointFilter>();
 
 app.MapEndpoints(buildersApi);
-SorteFederation.Builders.Endpoints.PublishedApplicationAiEndpoints.Map(
-    app.MapGroup("/api/v1").WithTags("Published application AI").RequireRateLimiting("builders-api"));
-SorteFederation.Builders.Endpoints.BuilderApplicationUserEndpoints.MapEndpoint(app.MapGroup("/api/v1").WithTags("Builders"));
-SorteFederation.Builders.Endpoints.BuilderWorkspaceEndpoints.Map(app.MapGroup("/api/v1").WithTags("Builders"));
-SorteFederation.Builders.Endpoints.TenantAccessEndpoints.Map(app.MapGroup("/api/v1").WithTags("Builders"));
-SorteFederation.Builders.Endpoints.SystemDashboardEndpoints.Map(app.MapGroup("/api/v1").WithTags("Builders"));
+PublishedApplicationAiEndpoints.Map(app.MapGroup("/api/v1").WithTags("Published application AI").RequireRateLimiting("builders-api"));
+BuilderApplicationUserEndpoints.MapEndpoint(app.MapGroup("/api/v1").WithTags("Builders"));
+BuilderWorkspaceEndpoints.Map(app.MapGroup("/api/v1").WithTags("Builders"));
+TenantAccessEndpoints.Map(app.MapGroup("/api/v1").WithTags("Builders"));
+SystemDashboardEndpoints.Map(app.MapGroup("/api/v1").WithTags("Builders"));
+
 app.MapOpenApi().CacheOutput();
 
 app.MapLogLevelHandler();
@@ -261,6 +265,8 @@ else
         "Builder SPA assets were not found at {SpaRoot}; serving API routes without SPA fallback.",
         spaRoot);
 }
+
+// app.UseHangfireDashboard();
 
 app.Run();
 

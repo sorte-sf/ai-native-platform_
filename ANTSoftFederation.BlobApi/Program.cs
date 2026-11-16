@@ -1,5 +1,6 @@
 
 global using SorteFederation.Logger;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -75,5 +76,11 @@ app.MapDefaultEndpoints();
 //app.UseHttpsRedirection();
 
 app.MapLogLevelHandler();
+
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var blobDb = scope.ServiceProvider.GetRequiredService<BlobDbContext>();
+    await blobDb.Database.MigrateAsync();
+}
 
 app.Run();
