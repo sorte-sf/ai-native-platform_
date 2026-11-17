@@ -40,6 +40,10 @@ jobs:
       - name: Build
         run: dotnet build SorteFederation.Builders.csproj --no-restore --configuration Release
       - name: Install EF CLI
-        run: dotnet tool install --global dotnet-ef --version 10.0.12
-      - name: Verify EF migrations
-        run: dotnet ef migrations list --context BuilderDbContext --no-build --configuration Release
+        run: dotnet tool install --global dotnet-ef --version 10.0.14
+      - name: Generate Builder migration SQL
+        env:
+          Encryption__Key: 0123456789abcdef0123456789abcdef
+          Auth__Jwt__Key: ci-only-jwt-signing-key-not-for-production
+          ConnectionStrings__ANTPortalDb: Host=localhost;Port=5432;Database=builder_migrations;Username=ci;Password=ci
+        run: dotnet ef migrations script --context BuilderDbContext --no-build --configuration Release --output "${RUNNER_TEMP}/builders-migrations.sql"

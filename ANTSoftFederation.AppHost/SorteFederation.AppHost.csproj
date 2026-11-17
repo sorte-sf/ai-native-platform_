@@ -22,7 +22,7 @@
 		
 		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.6.5" />
 		
-		<PackageReference Include="Scalar.Aspire" Version="0.15.0" />
+		<PackageReference Include="Scalar.Aspire" Version="1.0.1" />
 
 		<PackageVersion Include="VaultSharp" Version="1.17.5.1" />
 		<PackageVersion Include="VaultSharp.Extensions.Configuration" Version="1.0.5" />
@@ -40,7 +40,7 @@
 		<PackageReference Include="Aspire.Hosting.Seq" Version="13.6.5" />
 
 		<PackageReference Include="CommunityToolkit.Aspire.Hosting.PostgreSQL.Extensions" Version="*" />
-		<PackageReference Include="CommunityToolkit.Aspire.Hosting.Stripe" Version="13.5.0" />
+		<PackageReference Include="CommunityToolkit.Aspire.Hosting.Stripe" Version="13.6.1" />
 		<PackageReference Include="CommunityToolkit.Aspire.Hosting.Ollama" Version="*" /> 
 		 
 		<PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
