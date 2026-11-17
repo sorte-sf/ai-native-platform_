@@ -1,16 +1,15 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY Api/ANTSoftFederation.Builders/ Api/ANTSoftFederation.Builders/
-COPY Api/ANTSoftFederation.EncryptEFCoreColumn/ Api/ANTSoftFederation.EncryptEFCoreColumn/
-COPY Api/ANTSoftFederation.GlobalEnums/ Api/ANTSoftFederation.GlobalEnums/
-COPY Api/ANTSoftFederation.KeyVault/ Api/ANTSoftFederation.KeyVault/
-COPY Api/ANTSoftFederation.Logger/ Api/ANTSoftFederation.Logger/
-COPY Api/ANTSoftFederation.ServiceDefaults/ Api/ANTSoftFederation.ServiceDefaults/
-COPY Api/ANTSoftFederation.Shared/ Api/ANTSoftFederation.Shared/
-COPY Clients/AntsoftBuilder/src/app/core/builders/page-components.v1.json Clients/AntsoftBuilder/src/app/core/builders/page-components.v1.json
+COPY ANTSoftFederation.Builders/ ANTSoftFederation.Builders/
+COPY ANTSoftFederation.EncryptEFCoreColumn/ ANTSoftFederation.EncryptEFCoreColumn/
+COPY ANTSoftFederation.GlobalEnums/ ANTSoftFederation.GlobalEnums/
+COPY ANTSoftFederation.KeyVault/ ANTSoftFederation.KeyVault/
+COPY ANTSoftFederation.Logger/ ANTSoftFederation.Logger/
+COPY ANTSoftFederation.ServiceDefaults/ ANTSoftFederation.ServiceDefaults/
+COPY ANTSoftFederation.Shared/ ANTSoftFederation.Shared/
 
-WORKDIR /src/Api/ANTSoftFederation.Builders
+WORKDIR /src/ANTSoftFederation.Builders
 RUN dotnet restore SorteFederation.Builders.csproj
 RUN dotnet publish SorteFederation.Builders.csproj --configuration Release --output /app/publish --no-restore
 

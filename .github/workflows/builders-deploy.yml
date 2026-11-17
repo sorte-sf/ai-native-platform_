@@ -3,14 +3,14 @@ name: Build and Publish Builders Image
 on:
   push:
     paths:
-      - 'Api/ANTSoftFederation.Builders/**'
-      - 'Api/ANTSoftFederation.EncryptEFCoreColumn/**'
-      - 'Api/ANTSoftFederation.GlobalEnums/**'
-      - 'Api/ANTSoftFederation.KeyVault/**'
-      - 'Api/ANTSoftFederation.Logger/**'
-      - 'Api/ANTSoftFederation.ServiceDefaults/**'
-      - 'Api/ANTSoftFederation.Shared/**'
-      - 'Clients/AntsoftBuilder/src/app/core/builders/page-components.v1.json'
+      - 'ANTSoftFederation.Builders/**'
+      - 'ANTSoftFederation.EncryptEFCoreColumn/**'
+      - 'ANTSoftFederation.GlobalEnums/**'
+      - 'ANTSoftFederation.KeyVault/**'
+      - 'ANTSoftFederation.Logger/**'
+      - 'ANTSoftFederation.ServiceDefaults/**'
+      - 'ANTSoftFederation.Shared/**'
+      - '.dockerignore'
       - '.github/workflows/builders-deploy.yml'
 
 permissions:
@@ -40,7 +40,7 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          file: Api/ANTSoftFederation.Builders/Dockerfile
+          file: ANTSoftFederation.Builders/Dockerfile
           push: true
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}

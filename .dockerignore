@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.git/
+**/node_modules/
+**/logs/
+**/LocalData/
+**/appsettings.Development.json
+**/launchSettings.json
+**/*.csproj.user
+**/*.suo
+**/.env
+**/.env.*

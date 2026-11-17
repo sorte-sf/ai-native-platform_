@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "properties": [
+    { "key": "text", "label": "ui.text", "editor": "multiline", "maxLength": 10000 },
+    { "key": "imageUrl", "label": "ui.image_url", "editor": "url", "maxLength": 10000 },
+    { "key": "pageKey", "label": "ui.navigate_to_page", "editor": "page", "maxLength": 80 }
+  ],
+  "components": [
+    { "type": "container", "children": true, "properties": ["text"] },
+    { "type": "text", "children": false, "properties": ["text"] },
+    { "type": "heading", "children": false, "properties": ["text"] },
+    { "type": "image", "children": false, "properties": ["imageUrl", "text"] },
+    { "type": "button", "children": false, "properties": ["text", "pageKey"] },
+    { "type": "table", "children": false, "properties": [], "binding": "object-or-json" },
+    { "type": "form", "children": false, "properties": [], "binding": "form" },
+    { "type": "crud", "children": false, "properties": ["text"], "binding": "form" },
+    { "type": "kpi", "children": false, "properties": ["text"], "binding": "object" },
+    { "type": "chart", "children": false, "properties": ["text"], "binding": "object" },
+    { "type": "kanban", "children": false, "properties": ["text"], "binding": "object" },
+    { "type": "gallery", "children": false, "properties": ["text"], "binding": "object-or-json" },
+    { "type": "data-grid", "children": false, "properties": ["text"], "binding": "object-or-json" },
+    { "type": "pivot-table", "children": false, "properties": ["text"], "binding": "object" },
+    { "type": "pagination", "children": false, "properties": [] },
+    { "type": "icon", "children": false, "properties": ["text"] },
+    { "type": "calendar", "children": false, "properties": ["text"], "binding": "object" },
+    { "type": "date-time-picker", "children": false, "properties": [] },
+    { "type": "flippable-card", "children": false, "properties": ["text"] },
+    { "type": "badge", "children": false, "properties": ["text"] },
+    { "type": "barcode-reader", "children": false, "properties": ["text"] },
+    { "type": "countdown", "children": false, "properties": ["text"] },
+    { "type": "countup", "children": false, "properties": ["text"] },
+    { "type": "qr-renderer", "children": false, "properties": ["text"] },
+    { "type": "stopwatch", "children": false, "properties": ["text"] },
+    { "type": "timeline", "children": false, "properties": ["text"] },
+    { "type": "tooltip", "children": false, "properties": ["text"] },
+    { "type": "markdown", "children": false, "properties": ["text"] }
+  ]
+}
