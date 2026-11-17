@@ -31,28 +31,49 @@ public sealed class WorkflowExecutionWorker(
     private async Task ProcessTenantAsync(Guid tenantId, TenantRuntimeContextFactory factory, CancellationToken token)
     {
         await using var db = await factory.CreateForWorkerAsync(tenantId, token);
-        var now = DateTimeOffset.UtcNow;
-        var tasks = await db.WorkflowTasks.Include(x => x.WorkflowInstance)
-            .Where(x => x.TenantId == tenantId && !x.Completed && x.Activated &&
-                x.WorkflowInstance.Status == WorkflowInstanceStatus.Running &&
-                ((x.DueAt != null && x.DueAt <= now) || (x.RetryAt != null && x.RetryAt <= now) || (x.EscalateAt != null && x.EscalateAt <= now)))
-            .OrderBy(x => x.DueAt ?? x.RetryAt ?? x.EscalateAt).Take(100).ToListAsync(token);
-        foreach (var task in tasks)
+        var strategy = db.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
         {
-            if (task.EscalateAt <= now && !string.IsNullOrWhiteSpace(task.EscalateTo))
+            db.ChangeTracker.Clear();
+            await using var transaction = await db.Database.BeginTransactionAsync(token);
+            var now = DateTimeOffset.UtcNow;
+            var tasks = await db.WorkflowTasks.FromSqlInterpolated($"""
+                SELECT * FROM builders_runtime."WorkflowTasks"
+                WHERE "TenantId" = {tenantId} AND NOT "Completed" AND "Activated"
+                  AND ("DueAt" <= {now} OR "RetryAt" <= {now} OR "EscalateAt" <= {now})
+                ORDER BY COALESCE("DueAt", "RetryAt", "EscalateAt")
+                LIMIT 100 FOR UPDATE SKIP LOCKED
+                """)
+                .Where(x => x.TenantId == tenantId && !x.Completed && x.Activated && x.WorkflowInstance.Status == WorkflowInstanceStatus.Running)
+                .ToListAsync(token);
+            var instanceIds = tasks.Select(x => x.WorkflowInstanceId).Distinct().ToArray();
+            var instances = await db.WorkflowInstances.Where(x => instanceIds.Contains(x.Id) && x.Status == WorkflowInstanceStatus.Running)
+                .ToDictionaryAsync(x => x.Id, token);
+            foreach (var task in tasks)
             {
-                task.AssignedTo = task.EscalateTo;
-                task.EscalateAt = null;
+                if (!instances.TryGetValue(task.WorkflowInstanceId, out var instance)) continue;
+                if (task.EscalateAt <= now)
+                {
+                    if (!string.IsNullOrWhiteSpace(task.EscalateTo)) task.AssignedTo = task.EscalateTo;
+                    task.EscalateAt = null;
+                }
+                if (task.RetryAt <= now)
+                {
+                    task.RetryCount++;
+                    task.RetryAt = task.RetryCount < task.MaxRetries ? now.AddSeconds(Math.Min(300, 15 * task.RetryCount)) : null;
+                    if (task.RetryCount >= task.MaxRetries)
+                    {
+                        instance.Status = WorkflowInstanceStatus.Failed;
+                        instance.LastError = task.LastError ?? "Workflow task exceeded its retry limit.";
+                        instance.Version++;
+                    }
+                }
+                if (task.DueAt <= now) task.DueAt = null;
+                task.Version++;
+                task.UpdatedAt = now;
             }
-            if (task.RetryAt <= now)
-            {
-                task.RetryCount++;
-                task.RetryAt = task.RetryCount < task.MaxRetries ? now.AddSeconds(Math.Min(300, 15 * task.RetryCount)) : null;
-                if (task.RetryCount >= task.MaxRetries) task.WorkflowInstance.Status = WorkflowInstanceStatus.Failed;
-            }
-            if (task.DueAt <= now) task.DueAt = null;
-            task.UpdatedAt = now;
-        }
-        await db.SaveChangesAsync(token);
+            await db.SaveChangesAsync(token);
+            await transaction.CommitAsync(token);
+        });
     }
 }

@@ -1,3 +1,5 @@
+using SorteFederation.EncryptEFCoreColumn;
+
 namespace SorteFederation.Builders.Data.Domain;
 
 public sealed class BuilderAiTenantPolicy : BuilderEntity
@@ -7,6 +9,8 @@ public sealed class BuilderAiTenantPolicy : BuilderEntity
     public string? Endpoint { get; set; }
     public string? Model { get; set; }
     public string? ApiKeyReference { get; set; }
+    [EncryptColumn]
+    public string? PersonalApiKey { get; set; }
     public string AuthScheme { get; set; } = "bearer";
     public long MonthlyTokenLimit { get; set; } = 100_000;
     public int MonthlyRequestLimit { get; set; } = 1_000;

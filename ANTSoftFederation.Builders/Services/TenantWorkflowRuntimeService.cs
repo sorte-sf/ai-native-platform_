@@ -1,6 +1,7 @@
 using SorteFederation.Builders.Contracts;
 using SorteFederation.Builders.Data.Enums;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 namespace SorteFederation.Builders.Services;
 
 public sealed class TenantWorkflowRuntimeService(BuilderDbContext metadata, TenantRuntimeContextFactory factory, BuilderAuthorizationService authorization, IHttpContextAccessor accessor, AuditService audit)
@@ -12,38 +13,127 @@ public sealed class TenantWorkflowRuntimeService(BuilderDbContext metadata, Tena
 
         var record = await db.Records.SingleOrDefaultAsync(x => x.Id == r.RecordId && x.TenantId == r.TenantId, t) ?? throw new KeyNotFoundException("Record was not found.");
         if (!await metadata.Objects.AnyAsync(x => x.Id == record.ObjectId && x.TenantId == r.TenantId && x.ApplicationId == workflow.ApplicationId, t)) throw new InvalidOperationException("The selected record does not belong to this workflow's application.");
-
         var systemUser = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity([new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, BuilderRoleNames.SystemAdmin)], "scheduled-job"));
-
         await authorization.EnsureRecordAccess(r.TenantId, record.ObjectId, record.Id, "read", systemUser, t);
+        var existing = await db.WorkflowInstances.Include(x => x.Tasks).SingleOrDefaultAsync(x => x.WorkflowId == r.WorkflowId && x.RecordId == r.RecordId && x.TenantId == r.TenantId && x.Status == WorkflowInstanceStatus.Running, t);
+        if (existing is not null) return existing;
 
-        var instance = new BuilderWorkflowInstance { TenantId = r.TenantId, WorkflowId = r.WorkflowId, RecordId = r.RecordId };
+        var instance = new BuilderWorkflowInstance { TenantId = r.TenantId, WorkflowId = r.WorkflowId, RecordId = r.RecordId, CreatedByUserId = systemUser.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier) ?? systemUser.Identity?.Name };
 
-        foreach (var spec in TaskSpecs(workflow.DefinitionJson)) instance.Tasks.Add(new BuilderWorkflowTask { TenantId = r.TenantId, Name = spec.Name, AssignedTo = spec.AssignedTo, DueAt = spec.DueAt, EscalateAt = spec.EscalateAt, EscalateTo = spec.EscalateTo, BranchKey = spec.BranchKey, DependsOn = spec.DependsOn, JoinKey = spec.JoinKey, Activated = string.IsNullOrWhiteSpace(spec.DependsOn), MaxRetries = spec.MaxRetries });
+        if (WorkflowGraphInterpreter.HasGraph(workflow.DefinitionJson))
+        {
+            var graph = WorkflowGraphInterpreter.Parse(workflow.DefinitionJson);
+            var firstTasks = graph.StartTasks(r.TenantId, record.DataJson);
+            if (firstTasks.Count == 0) instance.Status = WorkflowInstanceStatus.Completed;
+            else { instance.CurrentState = firstTasks[0].BranchKey ?? "Start"; foreach (var firstTask in firstTasks) instance.Tasks.Add(firstTask); }
+        }
+        else foreach (var spec in TaskSpecs(workflow.DefinitionJson)) instance.Tasks.Add(new BuilderWorkflowTask { TenantId = r.TenantId, Name = spec.Name, AssignedTo = spec.AssignedTo, DueAt = spec.DueAt, EscalateAt = spec.EscalateAt, EscalateTo = spec.EscalateTo, BranchKey = spec.BranchKey, DependsOn = spec.DependsOn, JoinKey = spec.JoinKey, Activated = string.IsNullOrWhiteSpace(spec.DependsOn), MaxRetries = spec.MaxRetries });
 
         db.WorkflowInstances.Add(instance);
-        await db.SaveChangesAsync(t);
+        try { await db.SaveChangesAsync(t); }
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            db.ChangeTracker.Clear();
+            var concurrent = await db.WorkflowInstances.Include(x => x.Tasks).SingleOrDefaultAsync(x => x.WorkflowId == r.WorkflowId && x.RecordId == r.RecordId && x.TenantId == r.TenantId && x.Status == WorkflowInstanceStatus.Running, t);
+            if (concurrent is not null) return concurrent;
+            throw;
+        }
         await WriteAudit(r.TenantId, "workflow.started", instance.Id, new { r.WorkflowId, r.RecordId, source = "scheduled-job" }, systemUser, t);
 
         return instance;
     }
     public async Task<BuilderWorkflowInstance> Start(StartWorkflowRequest r, CancellationToken t)
     {
-        var workflow = await metadata.Workflows.AsNoTracking().SingleOrDefaultAsync(x => x.Id == r.WorkflowId && x.TenantId == r.TenantId && x.Status == DefinitionStatus.Published, t) ?? throw new InvalidOperationException("Only a published workflow can be started."); await using var db = await factory.CreateAsync(r.TenantId, t); var record = await db.Records.SingleOrDefaultAsync(x => x.Id == r.RecordId && x.TenantId == r.TenantId, t) ?? throw new KeyNotFoundException("Record was not found."); if (!await metadata.Objects.AnyAsync(x => x.Id == record.ObjectId && x.TenantId == r.TenantId && x.ApplicationId == workflow.ApplicationId, t)) throw new InvalidOperationException("The selected record does not belong to this workflow's application."); var user = accessor.HttpContext?.User ?? new System.Security.Claims.ClaimsPrincipal(); await authorization.EnsureRecordAccess(r.TenantId, record.ObjectId, record.Id, "read", user, t); var i = new BuilderWorkflowInstance { TenantId = r.TenantId, WorkflowId = r.WorkflowId, RecordId = r.RecordId }; foreach (var spec in TaskSpecs(workflow.DefinitionJson)) { i.Tasks.Add(new BuilderWorkflowTask { TenantId = r.TenantId, Name = spec.Name, AssignedTo = spec.AssignedTo, DueAt = spec.DueAt, EscalateAt = spec.EscalateAt, EscalateTo = spec.EscalateTo, BranchKey = spec.BranchKey, DependsOn = spec.DependsOn, JoinKey = spec.JoinKey, Activated = string.IsNullOrWhiteSpace(spec.DependsOn), MaxRetries = spec.MaxRetries }); }
-        db.WorkflowInstances.Add(i); await db.SaveChangesAsync(t); await WriteAudit(r.TenantId, "workflow.started", i.Id, new { r.WorkflowId, r.RecordId }, user, t);
-        return i;
+        var workflow = await metadata.Workflows.AsNoTracking().SingleOrDefaultAsync(x => x.Id == r.WorkflowId && x.TenantId == r.TenantId && x.Status == DefinitionStatus.Published, t) ?? throw new InvalidOperationException("Only a published workflow can be started.");
+        await using var db = await factory.CreateAsync(r.TenantId, t);
+        var record = await db.Records.SingleOrDefaultAsync(x => x.Id == r.RecordId && x.TenantId == r.TenantId, t) ?? throw new KeyNotFoundException("Record was not found.");
+        if (!await metadata.Objects.AnyAsync(x => x.Id == record.ObjectId && x.TenantId == r.TenantId && x.ApplicationId == workflow.ApplicationId, t)) throw new InvalidOperationException("The selected record does not belong to this workflow's application.");
+        var user = accessor.HttpContext?.User ?? new System.Security.Claims.ClaimsPrincipal();
+        await authorization.EnsureRecordAccess(r.TenantId, record.ObjectId, record.Id, "read", user, t);
+        var existing = await db.WorkflowInstances.Include(x => x.Tasks).SingleOrDefaultAsync(x => x.WorkflowId == r.WorkflowId && x.RecordId == r.RecordId && x.TenantId == r.TenantId && x.Status == WorkflowInstanceStatus.Running, t);
+        if (existing is not null) return existing;
+        var instance = new BuilderWorkflowInstance { TenantId = r.TenantId, WorkflowId = r.WorkflowId, RecordId = r.RecordId, CreatedByUserId = user.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier) ?? user.Identity?.Name };
+        if (WorkflowGraphInterpreter.HasGraph(workflow.DefinitionJson))
+        {
+            var graph = WorkflowGraphInterpreter.Parse(workflow.DefinitionJson);
+            var firstTasks = graph.StartTasks(r.TenantId, record.DataJson);
+            if (firstTasks.Count == 0) instance.Status = WorkflowInstanceStatus.Completed;
+            else { instance.CurrentState = firstTasks[0].BranchKey ?? "Start"; foreach (var firstTask in firstTasks) instance.Tasks.Add(firstTask); }
+        }
+        else foreach (var spec in TaskSpecs(workflow.DefinitionJson)) instance.Tasks.Add(new BuilderWorkflowTask { TenantId = r.TenantId, Name = spec.Name, AssignedTo = spec.AssignedTo, DueAt = spec.DueAt, EscalateAt = spec.EscalateAt, EscalateTo = spec.EscalateTo, BranchKey = spec.BranchKey, DependsOn = spec.DependsOn, JoinKey = spec.JoinKey, Activated = string.IsNullOrWhiteSpace(spec.DependsOn), MaxRetries = spec.MaxRetries });
+        db.WorkflowInstances.Add(instance);
+        try { await db.SaveChangesAsync(t); }
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            db.ChangeTracker.Clear();
+            var concurrent = await db.WorkflowInstances.Include(x => x.Tasks).SingleOrDefaultAsync(x => x.WorkflowId == r.WorkflowId && x.RecordId == r.RecordId && x.TenantId == r.TenantId && x.Status == WorkflowInstanceStatus.Running, t);
+            if (concurrent is not null) return concurrent;
+            throw;
+        }
+        await WriteAudit(r.TenantId, "workflow.started", instance.Id, new { r.WorkflowId, r.RecordId }, user, t);
+        return instance;
     }
     public async Task<bool> Complete(CompleteWorkflowTaskRequest r, CancellationToken t)
     {
         var user = accessor.HttpContext?.User ?? new System.Security.Claims.ClaimsPrincipal(); await using var db = await factory.CreateAsync(r.TenantId, t); var task = await db.WorkflowTasks.Include(x => x.WorkflowInstance).SingleOrDefaultAsync(x => x.Id == r.TaskId && x.TenantId == r.TenantId, t); if (task is null) return false; if (task.Completed) return true; if (task.WorkflowInstance.Status != WorkflowInstanceStatus.Running) throw new InvalidOperationException("Tasks can only be completed while the workflow is running."); if (!task.Activated) throw new InvalidOperationException("This workflow task is waiting for its branch dependencies."); var record = await db.Records.AsNoTracking().SingleOrDefaultAsync(x => x.Id == task.WorkflowInstance.RecordId && x.TenantId == r.TenantId, t) ?? throw new KeyNotFoundException("Workflow record was not found."); await authorization.EnsureObjectAccess(r.TenantId, record.ObjectId, "read", user, t); if (!string.IsNullOrWhiteSpace(task.AssignedTo) && !user.IsInRole(BuilderRoleNames.SystemAdmin) && !user.IsInRole(BuilderRoleNames.TenantAdmin)) { var actor = user.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier) ?? user.Identity?.Name; var roles = user.FindAll(System.Security.Claims.ClaimTypes.Role).Concat(user.FindAll("role")).Select(x => x.Value); if (!string.Equals(task.AssignedTo, actor, StringComparison.OrdinalIgnoreCase) && !roles.Contains(task.AssignedTo, StringComparer.OrdinalIgnoreCase)) throw new UnauthorizedAccessException("The task is assigned to another user or role."); }
+        var graphWorkflow = await metadata.Workflows.AsNoTracking().SingleOrDefaultAsync(x => x.Id == task.WorkflowInstance.WorkflowId && x.TenantId == r.TenantId, t);
+        if (graphWorkflow is not null && WorkflowGraphInterpreter.HasGraph(graphWorkflow.DefinitionJson))
+        {
+            var outcome = string.IsNullOrWhiteSpace(r.Outcome) ? "approved" : r.Outcome.Trim().ToLowerInvariant();
+            if (outcome is not ("approved" or "rejected")) throw new ArgumentException("Workflow task outcome must be approved or rejected.");
+            var graph = WorkflowGraphInterpreter.Parse(graphWorkflow.DefinitionJson);
+            var taskContext = graph.ApprovalTaskContext(task.JoinKey);
+            var level = taskContext.Level;
+            var actorId = user.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier) ?? user.Identity?.Name;
+            var isAdmin = user.IsInRole(BuilderRoleNames.SystemAdmin) || user.IsInRole(BuilderRoleNames.TenantAdmin);
+            if (outcome == "approved" && !isAdmin && !string.IsNullOrWhiteSpace(actorId) &&
+                string.Equals(actorId, task.WorkflowInstance.CreatedByUserId, StringComparison.OrdinalIgnoreCase) &&
+                graph.RequiresRequesterSeparation(task.BranchKey ?? string.Empty, level))
+                throw new UnauthorizedAccessException("The workflow requester cannot approve their own request at this approval level.");
+            var now = DateTimeOffset.UtcNow;
+            var approvalGroup = await db.WorkflowTasks.Where(x => x.WorkflowInstanceId == task.WorkflowInstanceId && x.BranchKey == task.BranchKey && x.JoinKey == task.JoinKey).ToListAsync(t);
+            task.Completed = true;
+            task.CompletedAt = now;
+            var unresolved = approvalGroup.Where(x => x.Id != task.Id && !x.Completed && x.Activated).ToArray();
+            var parallelAction = WorkflowGraphInterpreter.ResolveParallelApproval(taskContext.Mode, outcome, unresolved.Length);
+            if (parallelAction == WorkflowGraphInterpreter.ParallelApprovalAction.AwaitingOthers)
+            {
+                task.WorkflowInstance.Version++;
+                task.Version++;
+                task.WorkflowInstance.UpdatedAt = now;
+                task.UpdatedAt = now;
+                await db.SaveChangesAsync(t);
+                await WriteAudit(r.TenantId, "workflow.task.completed", task.WorkflowInstanceId, new { r.TaskId, task.Name, outcome, pendingParallelApprovers = unresolved.Length }, user, t);
+                return true;
+            }
+            foreach (var pending in unresolved)
+            {
+                pending.Completed = true;
+                pending.CompletedAt = now;
+                pending.LastError = outcome == "rejected" ? "Cancelled because a parallel approver rejected this approval." : "Cancelled because another parallel approver completed the approval.";
+                pending.Version++;
+                pending.UpdatedAt = now;
+            }
+            var nextTasks = graph.ContinueApprovalLevelTasks(r.TenantId, task.BranchKey ?? string.Empty, level, outcome, record.DataJson);
+            if (nextTasks.Count == 0) task.WorkflowInstance.Status = WorkflowInstanceStatus.Completed;
+            else foreach (var next in nextTasks) db.WorkflowTasks.Add(new BuilderWorkflowTask { WorkflowInstanceId = task.WorkflowInstanceId, TenantId = r.TenantId, Name = next.Name, AssignedTo = next.AssignedTo, DueAt = next.DueAt, EscalateAt = next.EscalateAt, EscalateTo = next.EscalateTo, BranchKey = next.BranchKey, JoinKey = next.JoinKey, Activated = true });
+            task.WorkflowInstance.CurrentState = nextTasks.FirstOrDefault()?.BranchKey ?? outcome;
+            task.WorkflowInstance.Version++;
+            task.Version++;
+            task.WorkflowInstance.UpdatedAt = DateTimeOffset.UtcNow;
+            task.UpdatedAt = DateTimeOffset.UtcNow;
+            await db.SaveChangesAsync(t);
+            await WriteAudit(r.TenantId, "workflow.task.completed", task.WorkflowInstanceId, new { r.TaskId, task.Name, outcome, nextTasks = nextTasks.Select(x => x.Name), workflowStatus = task.WorkflowInstance.Status.ToString() }, user, t);
+            return true;
+        }
         task.Completed = true; task.CompletedAt = DateTimeOffset.UtcNow; var all = await db.WorkflowTasks.Where(x => x.WorkflowInstanceId == task.WorkflowInstanceId).ToListAsync(t); foreach (var dependent in all.Where(x => !x.Activated && !x.Completed && !string.IsNullOrWhiteSpace(x.DependsOn))) { var dependencies = dependent.DependsOn!.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries); if (dependencies.Length > 0 && dependencies.All(name => all.Any(x => x.Completed && string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase)))) dependent.Activated = true; }
-        var remaining = all.Any(x => !x.Completed && x.Activated); if (!remaining && all.All(x => x.Completed)) task.WorkflowInstance.Status = WorkflowInstanceStatus.Completed; task.UpdatedAt = DateTimeOffset.UtcNow; await db.SaveChangesAsync(t); await WriteAudit(r.TenantId, "workflow.task.completed", task.WorkflowInstanceId, new { r.TaskId, task.Name, activatedBranches = all.Where(x => x.Activated && !x.Completed).Select(x => x.Name), workflowStatus = task.WorkflowInstance.Status.ToString() }, user, t);
+        var remaining = all.Any(x => !x.Completed && x.Activated); if (!remaining && all.All(x => x.Completed)) task.WorkflowInstance.Status = WorkflowInstanceStatus.Completed; task.Version++; task.WorkflowInstance.Version++; task.UpdatedAt = DateTimeOffset.UtcNow; await db.SaveChangesAsync(t); await WriteAudit(r.TenantId, "workflow.task.completed", task.WorkflowInstanceId, new { r.TaskId, task.Name, activatedBranches = all.Where(x => x.Activated && !x.Completed).Select(x => x.Name), workflowStatus = task.WorkflowInstance.Status.ToString() }, user, t);
         return true;
     }
 
     public async Task<bool> Assign(Guid tenantId, Guid taskId, string assignedTo, CancellationToken t)
     {
-        if (string.IsNullOrWhiteSpace(assignedTo)) throw new ArgumentException("AssignedTo is required."); await using var db = await factory.CreateAsync(tenantId, t); var task = await db.WorkflowTasks.Include(x => x.WorkflowInstance).SingleOrDefaultAsync(x => x.Id == taskId && x.TenantId == tenantId, t); if (task is null) return false; var record = await db.Records.AsNoTracking().SingleOrDefaultAsync(x => x.Id == task.WorkflowInstance.RecordId && x.TenantId == tenantId, t) ?? throw new KeyNotFoundException("Workflow record was not found."); var user = accessor.HttpContext?.User ?? new System.Security.Claims.ClaimsPrincipal(); await authorization.EnsureObjectAccess(tenantId, record.ObjectId, "read", user, t); task.AssignedTo = assignedTo.Trim(); task.UpdatedAt = DateTimeOffset.UtcNow; await db.SaveChangesAsync(t); await WriteAudit(tenantId, "workflow.task.assigned", task.WorkflowInstanceId, new { taskId, assignedTo = task.AssignedTo }, user, t);
+        if (string.IsNullOrWhiteSpace(assignedTo)) throw new ArgumentException("AssignedTo is required."); await using var db = await factory.CreateAsync(tenantId, t); var task = await db.WorkflowTasks.Include(x => x.WorkflowInstance).SingleOrDefaultAsync(x => x.Id == taskId && x.TenantId == tenantId, t); if (task is null) return false; var record = await db.Records.AsNoTracking().SingleOrDefaultAsync(x => x.Id == task.WorkflowInstance.RecordId && x.TenantId == tenantId, t) ?? throw new KeyNotFoundException("Workflow record was not found."); var user = accessor.HttpContext?.User ?? new System.Security.Claims.ClaimsPrincipal(); await authorization.EnsureObjectAccess(tenantId, record.ObjectId, "read", user, t); task.AssignedTo = assignedTo.Trim(); task.Version++; task.UpdatedAt = DateTimeOffset.UtcNow; await db.SaveChangesAsync(t); await WriteAudit(tenantId, "workflow.task.assigned", task.WorkflowInstanceId, new { taskId, assignedTo = task.AssignedTo }, user, t);
         return true;
     }
 
@@ -92,7 +182,7 @@ public sealed class TenantWorkflowRuntimeService(BuilderDbContext metadata, Tena
         return allowed;
     }
     public async Task<bool> Cancel(Guid tenantId, Guid instanceId, CancellationToken t) { await using var db = await factory.CreateAsync(tenantId, t); var instance = await db.WorkflowInstances.SingleOrDefaultAsync(x => x.Id == instanceId && x.TenantId == tenantId, t); if (instance is null) return false; var record = await db.Records.AsNoTracking().SingleOrDefaultAsync(x => x.Id == instance.RecordId && x.TenantId == tenantId, t) ?? throw new KeyNotFoundException("Workflow record was not found."); var user = accessor.HttpContext?.User ?? new System.Security.Claims.ClaimsPrincipal(); await authorization.EnsureObjectAccess(tenantId, record.ObjectId, "read", user, t); if (instance.Status == WorkflowInstanceStatus.Running) { instance.Status = WorkflowInstanceStatus.Cancelled; instance.UpdatedAt = DateTimeOffset.UtcNow; await db.SaveChangesAsync(t); await WriteAudit(tenantId, "workflow.cancelled", instance.Id, new { instance.RecordId }, user, t); } return true; }
-    public async Task<BuilderWorkflowInstance> Transition(TransitionWorkflowRequest r, CancellationToken t) { await using var db = await factory.CreateAsync(r.TenantId, t); var instance = await db.WorkflowInstances.SingleOrDefaultAsync(x => x.Id == r.InstanceId && x.TenantId == r.TenantId, t) ?? throw new KeyNotFoundException("Workflow instance was not found."); if (instance.Status != WorkflowInstanceStatus.Running) throw new InvalidOperationException("Workflow instance is not running."); var record = await db.Records.AsNoTracking().SingleOrDefaultAsync(x => x.Id == instance.RecordId && x.TenantId == r.TenantId, t) ?? throw new KeyNotFoundException("Workflow record was not found."); var user = accessor.HttpContext?.User ?? new System.Security.Claims.ClaimsPrincipal(); await authorization.EnsureObjectAccess(r.TenantId, record.ObjectId, "read", user, t); var transition = await metadata.WorkflowTransitions.AsNoTracking().SingleOrDefaultAsync(x => x.WorkflowId == instance.WorkflowId && x.TenantId == r.TenantId && x.FromState == instance.CurrentState && x.Action == r.Action, t) ?? throw new InvalidOperationException("The requested workflow transition is not allowed."); if (!await ConditionMatches(instance.RecordId, transition.ConditionJson, r.TenantId, db, t)) throw new InvalidOperationException("The workflow transition condition is not satisfied."); var fromState = instance.CurrentState; instance.CurrentState = transition.ToState; instance.Version++; instance.UpdatedAt = DateTimeOffset.UtcNow; db.WorkflowTasks.Add(new BuilderWorkflowTask { TenantId = r.TenantId, WorkflowInstanceId = instance.Id, Name = $"{transition.ToState} task" }); await db.SaveChangesAsync(t); await WriteAudit(r.TenantId, "workflow.transitioned", instance.Id, new { fromState, toState = transition.ToState, r.Action, instance.RecordId }, user, t); return instance; }
+    public async Task<BuilderWorkflowInstance> Transition(TransitionWorkflowRequest r, CancellationToken t) { await using var db = await factory.CreateAsync(r.TenantId, t); var instance = await db.WorkflowInstances.SingleOrDefaultAsync(x => x.Id == r.InstanceId && x.TenantId == r.TenantId, t) ?? throw new KeyNotFoundException("Workflow instance was not found."); if (instance.Status != WorkflowInstanceStatus.Running) throw new InvalidOperationException("Workflow instance is not running."); var workflow = await metadata.Workflows.AsNoTracking().SingleOrDefaultAsync(x => x.Id == instance.WorkflowId && x.TenantId == r.TenantId, t); if (workflow is not null && WorkflowGraphInterpreter.HasGraph(workflow.DefinitionJson)) throw new InvalidOperationException("Visual workflows must advance through completion of their active designer task."); var record = await db.Records.AsNoTracking().SingleOrDefaultAsync(x => x.Id == instance.RecordId && x.TenantId == r.TenantId, t) ?? throw new KeyNotFoundException("Workflow record was not found."); var user = accessor.HttpContext?.User ?? new System.Security.Claims.ClaimsPrincipal(); await authorization.EnsureObjectAccess(r.TenantId, record.ObjectId, "read", user, t); var transition = await metadata.WorkflowTransitions.AsNoTracking().SingleOrDefaultAsync(x => x.WorkflowId == instance.WorkflowId && x.TenantId == r.TenantId && x.FromState == instance.CurrentState && x.Action == r.Action, t) ?? throw new InvalidOperationException("The requested workflow transition is not allowed."); if (!await ConditionMatches(instance.RecordId, transition.ConditionJson, r.TenantId, db, t)) throw new InvalidOperationException("The workflow transition condition is not satisfied."); var fromState = instance.CurrentState; instance.CurrentState = transition.ToState; instance.Version++; instance.UpdatedAt = DateTimeOffset.UtcNow; db.WorkflowTasks.Add(new BuilderWorkflowTask { TenantId = r.TenantId, WorkflowInstanceId = instance.Id, Name = $"{transition.ToState} task" }); await db.SaveChangesAsync(t); await WriteAudit(r.TenantId, "workflow.transitioned", instance.Id, new { fromState, toState = transition.ToState, r.Action, instance.RecordId }, user, t); return instance; }
     private static async Task<bool> ConditionMatches(Guid recordId, string? conditionJson, Guid tenant, TenantRuntimeDbContext db, CancellationToken t) { if (string.IsNullOrWhiteSpace(conditionJson)) return true; var record = await db.Records.AsNoTracking().SingleOrDefaultAsync(x => x.Id == recordId && x.TenantId == tenant, t); if (record is null) return false; using var condition = System.Text.Json.JsonDocument.Parse(conditionJson); using var data = System.Text.Json.JsonDocument.Parse(record.DataJson); return Evaluate(condition.RootElement, data.RootElement); }
     private static IReadOnlyList<string> TaskNames(string definitionJson)
     {

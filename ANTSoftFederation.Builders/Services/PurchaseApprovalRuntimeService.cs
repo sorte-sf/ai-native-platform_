@@ -184,12 +184,13 @@ public sealed class PurchaseApprovalRuntimeService(
 
         task.Completed = true;
         task.CompletedAt = DateTimeOffset.UtcNow;
+        task.Version++;
         task.UpdatedAt = DateTimeOffset.UtcNow;
         task.LastError = JsonSerializer.Serialize(new { decision, comment, decidedBy = actorId, workflowVersion = workflow.Version });
         var allTasks = await runtime.WorkflowTasks.Where(x => x.TenantId == tenantId && x.WorkflowInstanceId == task.WorkflowInstanceId).ToListAsync(token);
         if (decision == "reject")
         {
-            foreach (var pending in allTasks.Where(x => !x.Completed)) { pending.Completed = true; pending.CompletedAt = DateTimeOffset.UtcNow; pending.LastError = "Closed because the request was rejected."; }
+            foreach (var pending in allTasks.Where(x => !x.Completed)) { pending.Completed = true; pending.Version++; pending.CompletedAt = DateTimeOffset.UtcNow; pending.LastError = "Closed because the request was rejected."; }
             task.WorkflowInstance.Status = WorkflowInstanceStatus.Completed;
             task.WorkflowInstance.CurrentState = definition.RejectedStatus;
             record.DataJson = PurchaseApprovalRecordRules.SetStatus(record.DataJson, definition.StatusField, definition.RejectedStatus);

@@ -49,6 +49,7 @@ public sealed class BuilderDbContext(DbContextOptions<BuilderDbContext> options,
     public DbSet<BuilderPermission> Permissions => Set<BuilderPermission>();
     public DbSet<BuilderPermissionGrant> PermissionGrants => Set<BuilderPermissionGrant>();
     public DbSet<BuilderWorkflow> Workflows => Set<BuilderWorkflow>();
+    public DbSet<BuilderWorkflowApprovalPolicy> WorkflowApprovalPolicies => Set<BuilderWorkflowApprovalPolicy>();
     public DbSet<BuilderConnector> Connectors => Set<BuilderConnector>();
     public DbSet<BuilderRecordRelationship> RecordRelationships => Set<BuilderRecordRelationship>();
     public DbSet<BuilderWorkflowInstance> WorkflowInstances => Set<BuilderWorkflowInstance>();
@@ -67,6 +68,7 @@ public sealed class BuilderDbContext(DbContextOptions<BuilderDbContext> options,
     public DbSet<BuilderNotification> Notifications => Set<BuilderNotification>();
     public DbSet<BuilderPlatformEvent> PlatformEvents => Set<BuilderPlatformEvent>();
     public DbSet<BuilderAiTenantPolicy> AiTenantPolicies => Set<BuilderAiTenantPolicy>();
+    public DbSet<BuilderAiUserModel> AiUserModels => Set<BuilderAiUserModel>();
     public DbSet<BuilderAiUsage> AiUsage => Set<BuilderAiUsage>();
     public DbSet<BuilderAiUsagePeriod> AiUsagePeriods => Set<BuilderAiUsagePeriod>();
     public DbSet<BuilderUserFavouriteLink> UserFavouriteLinks => Set<BuilderUserFavouriteLink>();
@@ -239,6 +241,11 @@ public sealed class BuilderDbContext(DbContextOptions<BuilderDbContext> options,
         modelBuilder.Entity<BuilderField>().Property(x => x.ConfigurationJson).HasColumnType("jsonb");
         modelBuilder.Entity<BuilderForm>().Property(x => x.LayoutJson).HasColumnType("jsonb");
         modelBuilder.Entity<BuilderWorkflow>().Property(x => x.DefinitionJson).HasColumnType("jsonb");
+        modelBuilder.Entity<BuilderWorkflowApprovalPolicy>().ToTable("WorkflowApprovalPolicies");
+        modelBuilder.Entity<BuilderWorkflowApprovalPolicy>().Property(x => x.Key).HasMaxLength(120).IsRequired();
+        modelBuilder.Entity<BuilderWorkflowApprovalPolicy>().Property(x => x.Name).HasMaxLength(160).IsRequired();
+        modelBuilder.Entity<BuilderWorkflowApprovalPolicy>().Property(x => x.StepsJson).HasColumnType("jsonb").IsRequired();
+        modelBuilder.Entity<BuilderWorkflowApprovalPolicy>().HasIndex(x => new { x.TenantId, x.ApplicationId, x.Key }).IsUnique();
         modelBuilder.Entity<BuilderConnector>().Property(x => x.ConfigurationJson).HasColumnType("jsonb");
         modelBuilder.Entity<BuilderRelationship>().HasIndex(x => new { x.TenantId, x.SourceObjectId, x.Key }).IsUnique();
         modelBuilder.Entity<BuilderPermission>().HasIndex(x => new { x.TenantId, x.ApplicationId, x.Key }).IsUnique();
@@ -289,7 +296,16 @@ public sealed class BuilderDbContext(DbContextOptions<BuilderDbContext> options,
         modelBuilder.Entity<BuilderAiTenantPolicy>().Property(x => x.Endpoint).HasMaxLength(500);
         modelBuilder.Entity<BuilderAiTenantPolicy>().Property(x => x.Model).HasMaxLength(160);
         modelBuilder.Entity<BuilderAiTenantPolicy>().Property(x => x.ApiKeyReference).HasMaxLength(300);
+        modelBuilder.Entity<BuilderAiTenantPolicy>().Property(x => x.PersonalApiKey).HasMaxLength(4096);
         modelBuilder.Entity<BuilderAiTenantPolicy>().Property(x => x.AuthScheme).HasMaxLength(32);
+        modelBuilder.Entity<BuilderAiUserModel>().ToTable("AiUserModels");
+        modelBuilder.Entity<BuilderAiUserModel>().HasIndex(x => new { x.TenantId, x.UserId }).IsUnique();
+        modelBuilder.Entity<BuilderAiUserModel>().Property(x => x.UserId).HasMaxLength(200).IsRequired();
+        modelBuilder.Entity<BuilderAiUserModel>().Property(x => x.Provider).HasMaxLength(80).IsRequired();
+        modelBuilder.Entity<BuilderAiUserModel>().Property(x => x.Endpoint).HasMaxLength(500).IsRequired();
+        modelBuilder.Entity<BuilderAiUserModel>().Property(x => x.Model).HasMaxLength(160).IsRequired();
+        modelBuilder.Entity<BuilderAiUserModel>().Property(x => x.ApiKey).HasMaxLength(4096).IsRequired();
+        modelBuilder.Entity<BuilderAiUserModel>().Property(x => x.AuthScheme).HasMaxLength(32).IsRequired();
         modelBuilder.Entity<BuilderAiUsage>().HasIndex(x => new { x.TenantId, x.CreatedAt });
         modelBuilder.Entity<BuilderAiUsage>().HasIndex(x => new { x.TenantId, x.Feature, x.CreatedAt });
         modelBuilder.Entity<BuilderAiUsage>().HasIndex(x => x.RequestId).IsUnique();

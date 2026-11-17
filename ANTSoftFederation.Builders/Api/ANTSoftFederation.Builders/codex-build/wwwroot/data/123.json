@@ -1,0 +1,1421 @@
+{
+    "shell": null,
+    "theme": null,
+    "objects": [
+        {
+            "key": "suppliers",
+            "name": "Suppliers",
+            "forms": [
+                {
+                    "key": "suppliers-details",
+                    "name": "Suppliers details",
+                    "formConfigJson": "{\"fields\":[{\"key\":\"name\",\"label\":\"Supplier name\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"supplier-code\",\"label\":\"Supplier code\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"tax-number\",\"label\":\"Tax number\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"email\",\"label\":\"Email\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{\"type\":\"email\"}},{\"key\":\"phone\",\"label\":\"Phone\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"currency\",\"label\":\"Currency\",\"type\":\"select\",\"required\":false,\"options\":[\"USD\",\"EUR\",\"GBP\",\"TRY\",\"Other\"],\"props\":{}},{\"key\":\"payment-terms\",\"label\":\"Payment terms\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"status\",\"label\":\"Status\",\"type\":\"select\",\"required\":false,\"options\":[\"Active\",\"On hold\",\"Inactive\"],\"props\":{}},{\"key\":\"submit\",\"label\":\"Save\",\"type\":\"submit\"}]}"
+                }
+            ],
+            "fields": [
+                {
+                    "key": "name",
+                    "type": "Text",
+                    "label": "Supplier name",
+                    "required": true,
+                    "searchable": true,
+                    "configurationJson": null
+                },
+                {
+                    "key": "supplier-code",
+                    "type": "Text",
+                    "label": "Supplier code",
+                    "required": false,
+                    "searchable": true,
+                    "configurationJson": null
+                },
+                {
+                    "key": "tax-number",
+                    "type": "Text",
+                    "label": "Tax number",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "email",
+                    "type": "Email",
+                    "label": "Email",
+                    "required": false,
+                    "searchable": true,
+                    "configurationJson": null
+                },
+                {
+                    "key": "phone",
+                    "type": "Phone",
+                    "label": "Phone",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "currency",
+                    "type": "SelectionBox",
+                    "label": "Currency",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"USD\",\"EUR\",\"GBP\",\"TRY\",\"Other\"]}"
+                },
+                {
+                    "key": "payment-terms",
+                    "type": "Text",
+                    "label": "Payment terms",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "status",
+                    "type": "SelectionBox",
+                    "label": "Status",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"Active\",\"On hold\",\"Inactive\"]}"
+                }
+            ]
+        },
+        {
+            "key": "purchase-requests",
+            "name": "Purchase requests",
+            "forms": [
+                {
+                    "key": "purchase-requests-details",
+                    "name": "Purchase requests details",
+                    "formConfigJson": "{\"fields\":[{\"key\":\"request-number\",\"label\":\"Request number\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"title\",\"label\":\"Request title\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"request-type\",\"label\":\"Request type\",\"type\":\"select\",\"required\":true,\"options\":[\"Goods\",\"Service\",\"Capital expenditure\",\"Direct purchase\"],\"props\":{}},{\"key\":\"requester\",\"label\":\"Requester\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"org-unit\",\"label\":\"Organization unit\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"cost-center\",\"label\":\"Cost center\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"status\",\"label\":\"Status\",\"type\":\"select\",\"required\":true,\"options\":[\"Draft\",\"Submitted\",\"In approval\",\"Approved\",\"Rejected\",\"Withdrawn\",\"Cancelled\"],\"props\":{}},{\"key\":\"currency\",\"label\":\"Currency\",\"type\":\"select\",\"required\":false,\"options\":[\"USD\",\"EUR\",\"GBP\",\"TRY\",\"Other\"],\"props\":{}},{\"key\":\"total-estimate\",\"label\":\"Estimated total\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"needed-by\",\"label\":\"Needed by\",\"type\":\"datepicker\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"justification\",\"label\":\"Business justification\",\"type\":\"textarea\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"risk-flags\",\"label\":\"Risk flags\",\"type\":\"multi-checkbox\",\"required\":false,\"options\":[\"Urgent\",\"Single supplier\",\"Off contract\",\"Capital expenditure\"],\"props\":{}},{\"key\":\"suggested-supplier\",\"label\":\"Suggested supplier\",\"type\":\"select\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"submit\",\"label\":\"Save\",\"type\":\"submit\"}]}"
+                }
+            ],
+            "fields": [
+                {
+                    "key": "request-number",
+                    "type": "Text",
+                    "label": "Request number",
+                    "required": true,
+                    "searchable": true,
+                    "configurationJson": null
+                },
+                {
+                    "key": "title",
+                    "type": "Text",
+                    "label": "Request title",
+                    "required": true,
+                    "searchable": true,
+                    "configurationJson": null
+                },
+                {
+                    "key": "request-type",
+                    "type": "SelectionBox",
+                    "label": "Request type",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"Goods\",\"Service\",\"Capital expenditure\",\"Direct purchase\"]}"
+                },
+                {
+                    "key": "requester",
+                    "type": "User",
+                    "label": "Requester",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "org-unit",
+                    "type": "Text",
+                    "label": "Organization unit",
+                    "required": false,
+                    "searchable": true,
+                    "configurationJson": null
+                },
+                {
+                    "key": "cost-center",
+                    "type": "Text",
+                    "label": "Cost center",
+                    "required": false,
+                    "searchable": true,
+                    "configurationJson": null
+                },
+                {
+                    "key": "status",
+                    "type": "SelectionBox",
+                    "label": "Status",
+                    "required": true,
+                    "searchable": true,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"Draft\",\"Submitted\",\"In approval\",\"Approved\",\"Rejected\",\"Withdrawn\",\"Cancelled\"]}"
+                },
+                {
+                    "key": "currency",
+                    "type": "SelectionBox",
+                    "label": "Currency",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"USD\",\"EUR\",\"GBP\",\"TRY\",\"Other\"]}"
+                },
+                {
+                    "key": "total-estimate",
+                    "type": "Decimal",
+                    "label": "Estimated total",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "needed-by",
+                    "type": "Date",
+                    "label": "Needed by",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "justification",
+                    "type": "LongText",
+                    "label": "Business justification",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "risk-flags",
+                    "type": "MultiChoice",
+                    "label": "Risk flags",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"Urgent\",\"Single supplier\",\"Off contract\",\"Capital expenditure\"]}"
+                },
+                {
+                    "key": "suggested-supplier",
+                    "type": "Lookup",
+                    "label": "Suggested supplier",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"suppliers\",\"displayField\":\"name\"}}"
+                }
+            ]
+        },
+        {
+            "key": "request-lines",
+            "name": "Request lines",
+            "forms": [
+                {
+                    "key": "request-lines-details",
+                    "name": "Request lines details",
+                    "formConfigJson": "{\"fields\":[{\"key\":\"purchase-request\",\"label\":\"Purchase request\",\"type\":\"select\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"line-number\",\"label\":\"Line number\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"description\",\"label\":\"Item or service\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"category\",\"label\":\"Category\",\"type\":\"select\",\"required\":false,\"options\":[\"Technology\",\"Facilities\",\"Professional services\",\"Travel\",\"Office supplies\",\"Other\"],\"props\":{}},{\"key\":\"quantity\",\"label\":\"Quantity\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"unit\",\"label\":\"Unit\",\"type\":\"select\",\"required\":false,\"options\":[\"Each\",\"Hour\",\"Day\",\"Month\",\"Lot\"],\"props\":{}},{\"key\":\"estimated-unit-price\",\"label\":\"Estimated unit price\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"line-total\",\"label\":\"Estimated line total\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"suggested-supplier\",\"label\":\"Suggested supplier\",\"type\":\"select\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"status\",\"label\":\"Line status\",\"type\":\"select\",\"required\":false,\"options\":[\"Open\",\"In sourcing\",\"Ordered\",\"Cancelled\"],\"props\":{}},{\"key\":\"submit\",\"label\":\"Save\",\"type\":\"submit\"}]}"
+                }
+            ],
+            "fields": [
+                {
+                    "key": "purchase-request",
+                    "type": "Lookup",
+                    "label": "Purchase request",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"purchase-requests\",\"displayField\":\"request-number\"}}"
+                },
+                {
+                    "key": "line-number",
+                    "type": "Integer",
+                    "label": "Line number",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "description",
+                    "type": "Text",
+                    "label": "Item or service",
+                    "required": true,
+                    "searchable": true,
+                    "configurationJson": null
+                },
+                {
+                    "key": "category",
+                    "type": "SelectionBox",
+                    "label": "Category",
+                    "required": false,
+                    "searchable": true,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"Technology\",\"Facilities\",\"Professional services\",\"Travel\",\"Office supplies\",\"Other\"]}"
+                },
+                {
+                    "key": "quantity",
+                    "type": "Decimal",
+                    "label": "Quantity",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "unit",
+                    "type": "SelectionBox",
+                    "label": "Unit",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"Each\",\"Hour\",\"Day\",\"Month\",\"Lot\"]}"
+                },
+                {
+                    "key": "estimated-unit-price",
+                    "type": "Decimal",
+                    "label": "Estimated unit price",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "line-total",
+                    "type": "Decimal",
+                    "label": "Estimated line total",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"formula\":{\"left\":\"quantity\",\"right\":\"estimated-unit-price\",\"operator\":\"*\"}}"
+                },
+                {
+                    "key": "suggested-supplier",
+                    "type": "Lookup",
+                    "label": "Suggested supplier",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"suppliers\",\"displayField\":\"name\"}}"
+                },
+                {
+                    "key": "status",
+                    "type": "SelectionBox",
+                    "label": "Line status",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"Open\",\"In sourcing\",\"Ordered\",\"Cancelled\"]}"
+                }
+            ]
+        },
+        {
+            "key": "approval-tasks",
+            "name": "Approval tasks",
+            "forms": [
+                {
+                    "key": "approval-tasks-details",
+                    "name": "Approval tasks details",
+                    "formConfigJson": "{\"fields\":[{\"key\":\"task-title\",\"label\":\"Task title\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"purchase-request\",\"label\":\"Purchase request\",\"type\":\"select\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"stage\",\"label\":\"Approval stage\",\"type\":\"select\",\"required\":true,\"options\":[\"Request review\",\"Supplier selection\",\"Order release\"],\"props\":{}},{\"key\":\"step-order\",\"label\":\"Step order\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"approver\",\"label\":\"Approver\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"authority-level\",\"label\":\"Authority level\",\"type\":\"select\",\"required\":false,\"options\":[\"L1\",\"L2\",\"L3\",\"L4\",\"L5\"],\"props\":{}},{\"key\":\"status\",\"label\":\"Task status\",\"type\":\"select\",\"required\":true,\"options\":[\"Pending\",\"Approved\",\"Rejected\",\"Sent back\",\"Skipped\"],\"props\":{}},{\"key\":\"due-at\",\"label\":\"Due date\",\"type\":\"datepicker\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"decision\",\"label\":\"Decision\",\"type\":\"select\",\"required\":false,\"options\":[\"Approve\",\"Reject\",\"Send back\"],\"props\":{}},{\"key\":\"comments\",\"label\":\"Comments\",\"type\":\"textarea\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"submit\",\"label\":\"Save\",\"type\":\"submit\"}]}"
+                }
+            ],
+            "fields": [
+                {
+                    "key": "task-title",
+                    "type": "Text",
+                    "label": "Task title",
+                    "required": true,
+                    "searchable": true,
+                    "configurationJson": null
+                },
+                {
+                    "key": "purchase-request",
+                    "type": "Lookup",
+                    "label": "Purchase request",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"purchase-requests\",\"displayField\":\"request-number\"}}"
+                },
+                {
+                    "key": "stage",
+                    "type": "SelectionBox",
+                    "label": "Approval stage",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"Request review\",\"Supplier selection\",\"Order release\"]}"
+                },
+                {
+                    "key": "step-order",
+                    "type": "Integer",
+                    "label": "Step order",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "approver",
+                    "type": "User",
+                    "label": "Approver",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "authority-level",
+                    "type": "SelectionBox",
+                    "label": "Authority level",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"L1\",\"L2\",\"L3\",\"L4\",\"L5\"]}"
+                },
+                {
+                    "key": "status",
+                    "type": "SelectionBox",
+                    "label": "Task status",
+                    "required": true,
+                    "searchable": true,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"Pending\",\"Approved\",\"Rejected\",\"Sent back\",\"Skipped\"]}"
+                },
+                {
+                    "key": "due-at",
+                    "type": "DateTime",
+                    "label": "Due date",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "decision",
+                    "type": "SelectionBox",
+                    "label": "Decision",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"Approve\",\"Reject\",\"Send back\"]}"
+                },
+                {
+                    "key": "comments",
+                    "type": "LongText",
+                    "label": "Comments",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                }
+            ]
+        },
+        {
+            "key": "purchase-orders",
+            "name": "Purchase orders",
+            "forms": [
+                {
+                    "key": "purchase-orders-details",
+                    "name": "Purchase orders details",
+                    "formConfigJson": "{\"fields\":[{\"key\":\"order-number\",\"label\":\"Order number\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"supplier\",\"label\":\"Supplier\",\"type\":\"select\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"purchase-request\",\"label\":\"Source request\",\"type\":\"select\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"status\",\"label\":\"Order status\",\"type\":\"select\",\"required\":true,\"options\":[\"Draft\",\"Approved\",\"Sent\",\"Confirmed\",\"Partially received\",\"Closed\",\"Cancelled\"],\"props\":{}},{\"key\":\"currency\",\"label\":\"Currency\",\"type\":\"select\",\"required\":false,\"options\":[\"USD\",\"EUR\",\"GBP\",\"TRY\",\"Other\"],\"props\":{}},{\"key\":\"total-amount\",\"label\":\"Order total\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"payment-terms\",\"label\":\"Payment terms\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"delivery-terms\",\"label\":\"Delivery terms\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"erp-document-reference\",\"label\":\"ERP document reference\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"submit\",\"label\":\"Save\",\"type\":\"submit\"}]}"
+                }
+            ],
+            "fields": [
+                {
+                    "key": "order-number",
+                    "type": "Text",
+                    "label": "Order number",
+                    "required": true,
+                    "searchable": true,
+                    "configurationJson": null
+                },
+                {
+                    "key": "supplier",
+                    "type": "Lookup",
+                    "label": "Supplier",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"suppliers\",\"displayField\":\"name\"}}"
+                },
+                {
+                    "key": "purchase-request",
+                    "type": "Lookup",
+                    "label": "Source request",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"purchase-requests\",\"displayField\":\"request-number\"}}"
+                },
+                {
+                    "key": "status",
+                    "type": "SelectionBox",
+                    "label": "Order status",
+                    "required": true,
+                    "searchable": true,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"Draft\",\"Approved\",\"Sent\",\"Confirmed\",\"Partially received\",\"Closed\",\"Cancelled\"]}"
+                },
+                {
+                    "key": "currency",
+                    "type": "SelectionBox",
+                    "label": "Currency",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"USD\",\"EUR\",\"GBP\",\"TRY\",\"Other\"]}"
+                },
+                {
+                    "key": "total-amount",
+                    "type": "Decimal",
+                    "label": "Order total",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "payment-terms",
+                    "type": "Text",
+                    "label": "Payment terms",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "delivery-terms",
+                    "type": "Text",
+                    "label": "Delivery terms",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "erp-document-reference",
+                    "type": "Text",
+                    "label": "ERP document reference",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                }
+            ]
+        },
+        {
+            "key": "purchase-order-lines",
+            "name": "Purchase order lines",
+            "forms": [
+                {
+                    "key": "purchase-order-lines-details",
+                    "name": "Purchase order lines details",
+                    "formConfigJson": "{\"fields\":[{\"key\":\"purchase-order\",\"label\":\"Purchase order\",\"type\":\"select\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"request-line\",\"label\":\"Request line\",\"type\":\"select\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"description\",\"label\":\"Item or service\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"quantity\",\"label\":\"Quantity\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"unit\",\"label\":\"Unit\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"unit-price\",\"label\":\"Unit price\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"line-total\",\"label\":\"Line total\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"quantity-received\",\"label\":\"Quantity received\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"submit\",\"label\":\"Save\",\"type\":\"submit\"}]}"
+                }
+            ],
+            "fields": [
+                {
+                    "key": "purchase-order",
+                    "type": "Lookup",
+                    "label": "Purchase order",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"purchase-orders\",\"displayField\":\"order-number\"}}"
+                },
+                {
+                    "key": "request-line",
+                    "type": "Lookup",
+                    "label": "Request line",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"request-lines\",\"displayField\":\"description\"}}"
+                },
+                {
+                    "key": "description",
+                    "type": "Text",
+                    "label": "Item or service",
+                    "required": true,
+                    "searchable": true,
+                    "configurationJson": null
+                },
+                {
+                    "key": "quantity",
+                    "type": "Decimal",
+                    "label": "Quantity",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "unit",
+                    "type": "Text",
+                    "label": "Unit",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "unit-price",
+                    "type": "Decimal",
+                    "label": "Unit price",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "line-total",
+                    "type": "Decimal",
+                    "label": "Line total",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"formula\":{\"left\":\"quantity\",\"right\":\"unit-price\",\"operator\":\"*\"}}"
+                },
+                {
+                    "key": "quantity-received",
+                    "type": "Decimal",
+                    "label": "Quantity received",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                }
+            ]
+        },
+        {
+            "key": "goods-receipts",
+            "name": "Goods receipts",
+            "forms": [
+                {
+                    "key": "goods-receipts-details",
+                    "name": "Goods receipts details",
+                    "formConfigJson": "{\"fields\":[{\"key\":\"receipt-number\",\"label\":\"Receipt number\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"purchase-order\",\"label\":\"Purchase order\",\"type\":\"select\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"delivery-note-number\",\"label\":\"Delivery note number\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"received-at\",\"label\":\"Received at\",\"type\":\"datepicker\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"received-by\",\"label\":\"Received by\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"status\",\"label\":\"Receipt status\",\"type\":\"select\",\"required\":true,\"options\":[\"Draft\",\"Posted\",\"Cancelled\"],\"props\":{}},{\"key\":\"erp-document-reference\",\"label\":\"ERP document reference\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"submit\",\"label\":\"Save\",\"type\":\"submit\"}]}"
+                }
+            ],
+            "fields": [
+                {
+                    "key": "receipt-number",
+                    "type": "Text",
+                    "label": "Receipt number",
+                    "required": true,
+                    "searchable": true,
+                    "configurationJson": null
+                },
+                {
+                    "key": "purchase-order",
+                    "type": "Lookup",
+                    "label": "Purchase order",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"purchase-orders\",\"displayField\":\"order-number\"}}"
+                },
+                {
+                    "key": "delivery-note-number",
+                    "type": "Text",
+                    "label": "Delivery note number",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "received-at",
+                    "type": "DateTime",
+                    "label": "Received at",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "received-by",
+                    "type": "User",
+                    "label": "Received by",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "status",
+                    "type": "SelectionBox",
+                    "label": "Receipt status",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"Draft\",\"Posted\",\"Cancelled\"]}"
+                },
+                {
+                    "key": "erp-document-reference",
+                    "type": "Text",
+                    "label": "ERP document reference",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                }
+            ]
+        },
+        {
+            "key": "goods-receipt-lines",
+            "name": "Goods receipt lines",
+            "forms": [
+                {
+                    "key": "goods-receipt-lines-details",
+                    "name": "Goods receipt lines details",
+                    "formConfigJson": "{\"fields\":[{\"key\":\"goods-receipt\",\"label\":\"Goods receipt\",\"type\":\"select\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"purchase-order-line\",\"label\":\"Purchase order line\",\"type\":\"select\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"description\",\"label\":\"Item or service\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"quantity-received\",\"label\":\"Quantity received\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"quantity-accepted\",\"label\":\"Quantity accepted\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"quantity-rejected\",\"label\":\"Quantity rejected\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"difference-type\",\"label\":\"Difference type\",\"type\":\"select\",\"required\":false,\"options\":[\"None\",\"Short\",\"Excess\",\"Off order\",\"Damaged\"],\"props\":{}},{\"key\":\"difference-note\",\"label\":\"Difference note\",\"type\":\"textarea\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"submit\",\"label\":\"Save\",\"type\":\"submit\"}]}"
+                }
+            ],
+            "fields": [
+                {
+                    "key": "goods-receipt",
+                    "type": "Lookup",
+                    "label": "Goods receipt",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"goods-receipts\",\"displayField\":\"receipt-number\"}}"
+                },
+                {
+                    "key": "purchase-order-line",
+                    "type": "Lookup",
+                    "label": "Purchase order line",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"purchase-order-lines\",\"displayField\":\"description\"}}"
+                },
+                {
+                    "key": "description",
+                    "type": "Text",
+                    "label": "Item or service",
+                    "required": true,
+                    "searchable": true,
+                    "configurationJson": null
+                },
+                {
+                    "key": "quantity-received",
+                    "type": "Decimal",
+                    "label": "Quantity received",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "quantity-accepted",
+                    "type": "Decimal",
+                    "label": "Quantity accepted",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "quantity-rejected",
+                    "type": "Decimal",
+                    "label": "Quantity rejected",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "difference-type",
+                    "type": "SelectionBox",
+                    "label": "Difference type",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"None\",\"Short\",\"Excess\",\"Off order\",\"Damaged\"]}"
+                },
+                {
+                    "key": "difference-note",
+                    "type": "LongText",
+                    "label": "Difference note",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                }
+            ]
+        },
+        {
+            "key": "quote-requests",
+            "name": "Quote requests",
+            "forms": [
+                {
+                    "key": "quote-requests-details",
+                    "name": "Quote requests details",
+                    "formConfigJson": "{\"fields\":[{\"key\":\"quote-request-number\",\"label\":\"Quote request number\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"purchase-request\",\"label\":\"Purchase request\",\"type\":\"select\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"status\",\"label\":\"Status\",\"type\":\"select\",\"required\":true,\"options\":[\"Draft\",\"Inviting\",\"Collecting quotes\",\"Evaluation\",\"Awarded\",\"Cancelled\"],\"props\":{}},{\"key\":\"response-deadline\",\"label\":\"Response deadline\",\"type\":\"datepicker\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"notes\",\"label\":\"Notes\",\"type\":\"textarea\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"submit\",\"label\":\"Save\",\"type\":\"submit\"}]}"
+                }
+            ],
+            "fields": [
+                {
+                    "key": "quote-request-number",
+                    "type": "Text",
+                    "label": "Quote request number",
+                    "required": true,
+                    "searchable": true,
+                    "configurationJson": null
+                },
+                {
+                    "key": "purchase-request",
+                    "type": "Lookup",
+                    "label": "Purchase request",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"purchase-requests\",\"displayField\":\"request-number\"}}"
+                },
+                {
+                    "key": "status",
+                    "type": "SelectionBox",
+                    "label": "Status",
+                    "required": true,
+                    "searchable": true,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"Draft\",\"Inviting\",\"Collecting quotes\",\"Evaluation\",\"Awarded\",\"Cancelled\"]}"
+                },
+                {
+                    "key": "response-deadline",
+                    "type": "DateTime",
+                    "label": "Response deadline",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "notes",
+                    "type": "LongText",
+                    "label": "Notes",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                }
+            ]
+        },
+        {
+            "key": "supplier-quotes",
+            "name": "Supplier quotes",
+            "forms": [
+                {
+                    "key": "supplier-quotes-details",
+                    "name": "Supplier quotes details",
+                    "formConfigJson": "{\"fields\":[{\"key\":\"quote-request\",\"label\":\"Quote request\",\"type\":\"select\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"supplier\",\"label\":\"Supplier\",\"type\":\"select\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"version\",\"label\":\"Version\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"currency\",\"label\":\"Currency\",\"type\":\"select\",\"required\":false,\"options\":[\"USD\",\"EUR\",\"GBP\",\"TRY\",\"Other\"],\"props\":{}},{\"key\":\"valid-until\",\"label\":\"Valid until\",\"type\":\"datepicker\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"total-amount\",\"label\":\"Total amount\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"payment-terms\",\"label\":\"Payment terms\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"delivery-terms\",\"label\":\"Delivery terms\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"status\",\"label\":\"Quote status\",\"type\":\"select\",\"required\":true,\"options\":[\"Submitted\",\"Correction requested\",\"Superseded\"],\"props\":{}},{\"key\":\"submit\",\"label\":\"Save\",\"type\":\"submit\"}]}"
+                }
+            ],
+            "fields": [
+                {
+                    "key": "quote-request",
+                    "type": "Lookup",
+                    "label": "Quote request",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"quote-requests\",\"displayField\":\"quote-request-number\"}}"
+                },
+                {
+                    "key": "supplier",
+                    "type": "Lookup",
+                    "label": "Supplier",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"suppliers\",\"displayField\":\"name\"}}"
+                },
+                {
+                    "key": "version",
+                    "type": "Integer",
+                    "label": "Version",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "currency",
+                    "type": "SelectionBox",
+                    "label": "Currency",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"USD\",\"EUR\",\"GBP\",\"TRY\",\"Other\"]}"
+                },
+                {
+                    "key": "valid-until",
+                    "type": "Date",
+                    "label": "Valid until",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "total-amount",
+                    "type": "Decimal",
+                    "label": "Total amount",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "payment-terms",
+                    "type": "Text",
+                    "label": "Payment terms",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "delivery-terms",
+                    "type": "Text",
+                    "label": "Delivery terms",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "status",
+                    "type": "SelectionBox",
+                    "label": "Quote status",
+                    "required": true,
+                    "searchable": true,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"Submitted\",\"Correction requested\",\"Superseded\"]}"
+                }
+            ]
+        },
+        {
+            "key": "supplier-quote-lines",
+            "name": "Supplier quote lines",
+            "forms": [
+                {
+                    "key": "supplier-quote-lines-details",
+                    "name": "Supplier quote lines details",
+                    "formConfigJson": "{\"fields\":[{\"key\":\"supplier-quote\",\"label\":\"Supplier quote\",\"type\":\"select\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"request-line\",\"label\":\"Requested item\",\"type\":\"select\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"unit-price\",\"label\":\"Unit price\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"quantity\",\"label\":\"Quantity\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"lead-time-days\",\"label\":\"Lead time (days)\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"notes\",\"label\":\"Notes\",\"type\":\"textarea\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"submit\",\"label\":\"Save\",\"type\":\"submit\"}]}"
+                }
+            ],
+            "fields": [
+                {
+                    "key": "supplier-quote",
+                    "type": "Lookup",
+                    "label": "Supplier quote",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"supplier-quotes\",\"displayField\":\"total-amount\"}}"
+                },
+                {
+                    "key": "request-line",
+                    "type": "Lookup",
+                    "label": "Requested item",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"request-lines\",\"displayField\":\"description\"}}"
+                },
+                {
+                    "key": "unit-price",
+                    "type": "Decimal",
+                    "label": "Unit price",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "quantity",
+                    "type": "Decimal",
+                    "label": "Quantity",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "lead-time-days",
+                    "type": "Integer",
+                    "label": "Lead time (days)",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "notes",
+                    "type": "LongText",
+                    "label": "Notes",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                }
+            ]
+        },
+        {
+            "key": "supplier-selections",
+            "name": "Supplier selections",
+            "forms": [
+                {
+                    "key": "supplier-selections-details",
+                    "name": "Supplier selections details",
+                    "formConfigJson": "{\"fields\":[{\"key\":\"quote-request\",\"label\":\"Quote request\",\"type\":\"select\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"supplier-quote\",\"label\":\"Selected supplier quote\",\"type\":\"select\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"selected-by\",\"label\":\"Selected by\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"status\",\"label\":\"Selection status\",\"type\":\"select\",\"required\":true,\"options\":[\"In review\",\"Selected\",\"Cancelled\"],\"props\":{}},{\"key\":\"rationale\",\"label\":\"Selection rationale\",\"type\":\"textarea\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"single-supplier\",\"label\":\"Single supplier\",\"type\":\"checkbox\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"off-contract\",\"label\":\"Off contract\",\"type\":\"checkbox\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"quote-variance-flag\",\"label\":\"Quote variance flagged\",\"type\":\"checkbox\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"selected-at\",\"label\":\"Selected at\",\"type\":\"datepicker\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"submit\",\"label\":\"Save\",\"type\":\"submit\"}]}"
+                }
+            ],
+            "fields": [
+                {
+                    "key": "quote-request",
+                    "type": "Lookup",
+                    "label": "Quote request",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"quote-requests\",\"displayField\":\"quote-request-number\"}}"
+                },
+                {
+                    "key": "supplier-quote",
+                    "type": "Lookup",
+                    "label": "Selected supplier quote",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"supplier-quotes\",\"displayField\":\"total-amount\"}}"
+                },
+                {
+                    "key": "selected-by",
+                    "type": "User",
+                    "label": "Selected by",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "status",
+                    "type": "SelectionBox",
+                    "label": "Selection status",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"In review\",\"Selected\",\"Cancelled\"]}"
+                },
+                {
+                    "key": "rationale",
+                    "type": "LongText",
+                    "label": "Selection rationale",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "single-supplier",
+                    "type": "Boolean",
+                    "label": "Single supplier",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "off-contract",
+                    "type": "Boolean",
+                    "label": "Off contract",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "quote-variance-flag",
+                    "type": "Boolean",
+                    "label": "Quote variance flagged",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "selected-at",
+                    "type": "DateTime",
+                    "label": "Selected at",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                }
+            ]
+        },
+        {
+            "key": "invoices",
+            "name": "Supplier invoices",
+            "forms": [
+                {
+                    "key": "invoices-details",
+                    "name": "Supplier invoices details",
+                    "formConfigJson": "{\"fields\":[{\"key\":\"invoice-number\",\"label\":\"Invoice number\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"supplier\",\"label\":\"Supplier\",\"type\":\"select\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"purchase-order\",\"label\":\"Purchase order\",\"type\":\"select\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"invoice-date\",\"label\":\"Invoice date\",\"type\":\"datepicker\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"due-date\",\"label\":\"Due date\",\"type\":\"datepicker\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"currency\",\"label\":\"Currency\",\"type\":\"select\",\"required\":false,\"options\":[\"USD\",\"EUR\",\"GBP\",\"TRY\",\"Other\"],\"props\":{}},{\"key\":\"net-amount\",\"label\":\"Net amount\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"tax-amount\",\"label\":\"Tax amount\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"gross-amount\",\"label\":\"Gross amount\",\"type\":\"input\",\"required\":true,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"status\",\"label\":\"Invoice status\",\"type\":\"select\",\"required\":true,\"options\":[\"Received\",\"Matching\",\"Matched\",\"Disputed\",\"Approved for posting\",\"Posted\",\"Rejected\"],\"props\":{}},{\"key\":\"submit\",\"label\":\"Save\",\"type\":\"submit\"}]}"
+                }
+            ],
+            "fields": [
+                {
+                    "key": "invoice-number",
+                    "type": "Text",
+                    "label": "Invoice number",
+                    "required": true,
+                    "searchable": true,
+                    "configurationJson": null
+                },
+                {
+                    "key": "supplier",
+                    "type": "Lookup",
+                    "label": "Supplier",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"suppliers\",\"displayField\":\"name\"}}"
+                },
+                {
+                    "key": "purchase-order",
+                    "type": "Lookup",
+                    "label": "Purchase order",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"purchase-orders\",\"displayField\":\"order-number\"}}"
+                },
+                {
+                    "key": "invoice-date",
+                    "type": "Date",
+                    "label": "Invoice date",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "due-date",
+                    "type": "Date",
+                    "label": "Due date",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "currency",
+                    "type": "SelectionBox",
+                    "label": "Currency",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"USD\",\"EUR\",\"GBP\",\"TRY\",\"Other\"]}"
+                },
+                {
+                    "key": "net-amount",
+                    "type": "Decimal",
+                    "label": "Net amount",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "tax-amount",
+                    "type": "Decimal",
+                    "label": "Tax amount",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "gross-amount",
+                    "type": "Decimal",
+                    "label": "Gross amount",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "status",
+                    "type": "SelectionBox",
+                    "label": "Invoice status",
+                    "required": true,
+                    "searchable": true,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"Received\",\"Matching\",\"Matched\",\"Disputed\",\"Approved for posting\",\"Posted\",\"Rejected\"]}"
+                }
+            ]
+        },
+        {
+            "key": "invoice-match-results",
+            "name": "Invoice match results",
+            "forms": [
+                {
+                    "key": "invoice-match-results-details",
+                    "name": "Invoice match results details",
+                    "formConfigJson": "{\"fields\":[{\"key\":\"invoice\",\"label\":\"Invoice\",\"type\":\"select\",\"required\":true,\"options\":null,\"props\":{}},{\"key\":\"result\",\"label\":\"Match result\",\"type\":\"select\",\"required\":true,\"options\":[\"Full\",\"Within tolerance\",\"Mismatch\"],\"props\":{}},{\"key\":\"price-variance-percent\",\"label\":\"Price variance (%)\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"quantity-variance-percent\",\"label\":\"Quantity variance (%)\",\"type\":\"input\",\"required\":false,\"options\":null,\"props\":{\"type\":\"number\"}},{\"key\":\"matched-at\",\"label\":\"Matched at\",\"type\":\"datepicker\",\"required\":false,\"options\":null,\"props\":{}},{\"key\":\"submit\",\"label\":\"Save\",\"type\":\"submit\"}]}"
+                }
+            ],
+            "fields": [
+                {
+                    "key": "invoice",
+                    "type": "Lookup",
+                    "label": "Invoice",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"lookup\":{\"targetObjectKey\":\"invoices\",\"displayField\":\"invoice-number\"}}"
+                },
+                {
+                    "key": "result",
+                    "type": "SelectionBox",
+                    "label": "Match result",
+                    "required": true,
+                    "searchable": false,
+                    "configurationJson": "{\"source\":\"static\",\"options\":[\"Full\",\"Within tolerance\",\"Mismatch\"]}"
+                },
+                {
+                    "key": "price-variance-percent",
+                    "type": "Decimal",
+                    "label": "Price variance (%)",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "quantity-variance-percent",
+                    "type": "Decimal",
+                    "label": "Quantity variance (%)",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                },
+                {
+                    "key": "matched-at",
+                    "type": "DateTime",
+                    "label": "Matched at",
+                    "required": false,
+                    "searchable": false,
+                    "configurationJson": null
+                }
+            ]
+        }
+    ],
+    "screens": [
+        {
+            "key": "dashboard",
+            "icon": "['fas','chart-line']",
+            "title": "Procurement overview",
+            "formKey": "purchase-requests-details",
+            "objectKey": "purchase-requests",
+            "htmlContent": "",
+            "definitionJson": "{\n  \"schemaVersion\": 1,\n  \"children\": [\n    {\n      \"id\": \"purchasing-dashboard\",\n      \"type\": \"container\",\n      \"children\": [\n        { \"id\": \"procurement-title\", \"type\": \"heading\", \"text\": \"Procurement overview\" },\n        { \"id\": \"procurement-intro\", \"type\": \"text\", \"text\": \"Track purchasing demand, approvals, supplier commitments, and delivery progress.\" },\n        {\n          \"id\": \"procurement-kpis\",\n          \"type\": \"container\",\n          \"responsiveColumns\": { \"desktop\": [8, 8, 8], \"tablet\": [12, 12], \"mobile\": [24] },\n          \"children\": [\n            { \"id\": \"kpi-requests\", \"type\": \"kpi\", \"text\": \"Purchase requests\", \"objectKey\": \"purchase-requests\" },\n            { \"id\": \"kpi-suppliers\", \"type\": \"kpi\", \"text\": \"Supplier records\", \"objectKey\": \"suppliers\" },\n            { \"id\": \"kpi-orders\", \"type\": \"kpi\", \"text\": \"Purchase orders\", \"objectKey\": \"purchase-orders\" }\n          ]\n        },\n        {\n          \"id\": \"procurement-charts\",\n          \"type\": \"container\",\n          \"responsiveColumns\": { \"desktop\": [8, 8, 8], \"tablet\": [12, 12], \"mobile\": [24] },\n          \"children\": [\n            { \"id\": \"request-status-chart\", \"type\": \"chart\", \"text\": \"Requests by status\", \"objectKey\": \"purchase-requests\", \"columns\": [\"status\"], \"chartKind\": \"doughnut\" },\n            { \"id\": \"request-type-chart\", \"type\": \"chart\", \"text\": \"Requests by type\", \"objectKey\": \"purchase-requests\", \"columns\": [\"request-type\"], \"chartKind\": \"bar\" },\n            { \"id\": \"order-status-chart\", \"type\": \"chart\", \"text\": \"Orders by status\", \"objectKey\": \"purchase-orders\", \"columns\": [\"status\"], \"chartKind\": \"bar\" }\n          ]\n        },\n        { \"id\": \"approval-heading\", \"type\": \"heading\", \"text\": \"Approval work\" },\n        { \"id\": \"approval-board\", \"type\": \"kanban\", \"text\": \"Approval task pipeline\", \"objectKey\": \"approval-tasks\", \"columns\": [\"status\"], \"titleField\": \"task-title\" },\n        { \"id\": \"recent-requests\", \"type\": \"table\", \"text\": \"Purchase request register\", \"objectKey\": \"purchase-requests\", \"columns\": [\"request-number\", \"title\", \"request-type\", \"requester\", \"status\", \"currency\", \"total-estimate\", \"needed-by\"] }\n      ]\n    }\n  ]\n}"
+        },
+        {
+            "key": "requests",
+            "icon": "['fas','file-circle-plus']",
+            "title": "Purchase requests",
+            "formKey": "purchase-requests-details",
+            "objectKey": "purchase-requests",
+            "htmlContent": "<h1>Purchase requests</h1><p>Review and manage purchase requests for your purchasing workspace.</p>",
+            "definitionJson": null
+        },
+        {
+            "key": "approvals",
+            "icon": "['fas','check-double']",
+            "title": "Approval inbox",
+            "formKey": "approval-tasks-details",
+            "objectKey": "approval-tasks",
+            "htmlContent": "<h1>Approval inbox</h1><p>Review and manage approval inbox for your purchasing workspace.</p>",
+            "definitionJson": null
+        },
+        {
+            "key": "suppliers",
+            "icon": "['fas','truck-field']",
+            "title": "Suppliers",
+            "formKey": "suppliers-details",
+            "objectKey": "suppliers",
+            "htmlContent": "<h1>Suppliers</h1><p>Review and manage suppliers for your purchasing workspace.</p>",
+            "definitionJson": null
+        },
+        {
+            "key": "orders",
+            "icon": "['fas','file-invoice']",
+            "title": "Purchase orders",
+            "formKey": "purchase-orders-details",
+            "objectKey": "purchase-orders",
+            "htmlContent": "<h1>Purchase orders</h1><p>Review and manage purchase orders for your purchasing workspace.</p>",
+            "definitionJson": null
+        },
+        {
+            "key": "receiving",
+            "icon": "['fas','boxes-stacked']",
+            "title": "Receiving",
+            "formKey": "goods-receipts-details",
+            "objectKey": "goods-receipts",
+            "htmlContent": "<h1>Receiving</h1><p>Review and manage receiving for your purchasing workspace.</p>",
+            "definitionJson": null
+        },
+        {
+            "key": "sourcing",
+            "icon": "['fas','file-signature']",
+            "title": "Sourcing",
+            "formKey": "quote-requests-details",
+            "objectKey": "quote-requests",
+            "htmlContent": "<h1>Sourcing</h1><p>Review and manage sourcing for your purchasing workspace.</p>",
+            "definitionJson": null
+        },
+        {
+            "key": "supplier-quotes",
+            "icon": "['fas','file-contract']",
+            "title": "Supplier quotes",
+            "formKey": "supplier-quotes-details",
+            "objectKey": "supplier-quotes",
+            "htmlContent": "<h1>Supplier quotes</h1><p>Review and manage supplier quotes for your purchasing workspace.</p>",
+            "definitionJson": null
+        },
+        {
+            "key": "supplier-selections",
+            "icon": "['fas','award']",
+            "title": "Supplier selections",
+            "formKey": "supplier-selections-details",
+            "objectKey": "supplier-selections",
+            "htmlContent": "<h1>Supplier selections</h1><p>Review and manage supplier selections for your purchasing workspace.</p>",
+            "definitionJson": null
+        },
+        {
+            "key": "invoices",
+            "icon": "['fas','file-invoice-dollar']",
+            "title": "Invoices",
+            "formKey": "invoices-details",
+            "objectKey": "invoices",
+            "htmlContent": "<h1>Invoices</h1><p>Review and manage invoices for your purchasing workspace.</p>",
+            "definitionJson": null
+        }
+    ],
+    "version": 1,
+    "workflows": [
+        {
+            "key": "purchase-request-approval",
+            "name": "Purchase request approval",
+            "definitionJson": "{\n  \"purchaseApproval\": {\n    \"objectKey\": \"purchase-requests\",\n    \"statusField\": \"status\",\n    \"requesterField\": \"requester\",\n    \"submittedStatus\": \"Draft\",\n    \"pendingStatus\": \"In approval\",\n    \"approvedStatus\": \"Approved\",\n    \"rejectedStatus\": \"Rejected\"\n  },\n  \"tasks\": [\n    { \"name\": \"Purchase request review\", \"assignedTo\": \"TenantAdmin\" }\n  ]\n}"
+        }
+    ],
+    "navigation": [
+        {
+            "key": "dashboard",
+            "icon": "['fas','chart-line']",
+            "label": "Dashboard",
+            "children": null,
+            "screenKey": "dashboard"
+        },
+        {
+            "key": "purchasing",
+            "icon": "['fas','cart-shopping']",
+            "label": "Purchasing",
+            "children": [
+                {
+                    "key": "requests",
+                    "icon": "['fas','file-circle-plus']",
+                    "label": "Purchase requests",
+                    "children": null,
+                    "screenKey": "requests"
+                },
+                {
+                    "key": "approvals",
+                    "icon": "['fas','check-double']",
+                    "label": "Approval inbox",
+                    "children": null,
+                    "screenKey": "approvals"
+                }
+            ],
+            "screenKey": null
+        },
+        {
+            "key": "supply-chain",
+            "icon": "['fas','truck-fast']",
+            "label": "Supply chain",
+            "children": [
+                {
+                    "key": "suppliers",
+                    "icon": "['fas','truck-field']",
+                    "label": "Suppliers",
+                    "children": null,
+                    "screenKey": "suppliers"
+                },
+                {
+                    "key": "orders",
+                    "icon": "['fas','file-invoice']",
+                    "label": "Purchase orders",
+                    "children": null,
+                    "screenKey": "orders"
+                },
+                {
+                    "key": "receiving",
+                    "icon": "['fas','boxes-stacked']",
+                    "label": "Receiving",
+                    "children": null,
+                    "screenKey": "receiving"
+                }
+            ],
+            "screenKey": null
+        },
+        {
+            "key": "sourcing-menu",
+            "icon": "['fas','file-signature']",
+            "label": "Sourcing",
+            "children": [
+                {
+                    "key": "sourcing",
+                    "icon": "['fas','file-signature']",
+                    "label": "Quote requests",
+                    "children": null,
+                    "screenKey": "sourcing"
+                },
+                {
+                    "key": "supplier-quotes",
+                    "icon": "['fas','file-contract']",
+                    "label": "Supplier quotes",
+                    "children": null,
+                    "screenKey": "supplier-quotes"
+                },
+                {
+                    "key": "supplier-selections",
+                    "icon": "['fas','award']",
+                    "label": "Supplier selections",
+                    "children": null,
+                    "screenKey": "supplier-selections"
+                }
+            ],
+            "screenKey": null
+        },
+        {
+            "key": "finance",
+            "icon": "['fas','file-invoice-dollar']",
+            "label": "Finance",
+            "children": [
+                {
+                    "key": "invoices",
+                    "icon": "['fas','file-invoice-dollar']",
+                    "label": "Invoices",
+                    "children": null,
+                    "screenKey": "invoices"
+                }
+            ],
+            "screenKey": null
+        }
+    ],
+    "relationships": [
+        {
+            "key": "supplier-orders",
+            "name": "Supplier purchase orders",
+            "cardinality": "one-to-many",
+            "sourceObjectKey": "suppliers",
+            "targetObjectKey": "purchase-orders"
+        },
+        {
+            "key": "request-lines",
+            "name": "Request lines",
+            "cardinality": "one-to-many",
+            "sourceObjectKey": "purchase-requests",
+            "targetObjectKey": "request-lines"
+        },
+        {
+            "key": "request-orders",
+            "name": "Orders from request",
+            "cardinality": "one-to-many",
+            "sourceObjectKey": "purchase-requests",
+            "targetObjectKey": "purchase-orders"
+        },
+        {
+            "key": "order-lines",
+            "name": "Purchase order lines",
+            "cardinality": "one-to-many",
+            "sourceObjectKey": "purchase-orders",
+            "targetObjectKey": "purchase-order-lines"
+        },
+        {
+            "key": "order-receipts",
+            "name": "Goods receipts",
+            "cardinality": "one-to-many",
+            "sourceObjectKey": "purchase-orders",
+            "targetObjectKey": "goods-receipts"
+        },
+        {
+            "key": "receipt-lines",
+            "name": "Goods receipt lines",
+            "cardinality": "one-to-many",
+            "sourceObjectKey": "goods-receipts",
+            "targetObjectKey": "goods-receipt-lines"
+        },
+        {
+            "key": "request-quote-requests",
+            "name": "Sourcing events",
+            "cardinality": "one-to-many",
+            "sourceObjectKey": "purchase-requests",
+            "targetObjectKey": "quote-requests"
+        },
+        {
+            "key": "sourcing-quotes",
+            "name": "Supplier responses",
+            "cardinality": "one-to-many",
+            "sourceObjectKey": "quote-requests",
+            "targetObjectKey": "supplier-quotes"
+        },
+        {
+            "key": "supplier-quotes",
+            "name": "Supplier quotes",
+            "cardinality": "one-to-many",
+            "sourceObjectKey": "suppliers",
+            "targetObjectKey": "supplier-quotes"
+        },
+        {
+            "key": "quote-lines",
+            "name": "Quote lines",
+            "cardinality": "one-to-many",
+            "sourceObjectKey": "supplier-quotes",
+            "targetObjectKey": "supplier-quote-lines"
+        },
+        {
+            "key": "quote-selection",
+            "name": "Awarded selection",
+            "cardinality": "one-to-one",
+            "sourceObjectKey": "quote-requests",
+            "targetObjectKey": "supplier-selections"
+        },
+        {
+            "key": "invoice-order",
+            "name": "Invoice purchase order",
+            "cardinality": "one-to-many",
+            "sourceObjectKey": "purchase-orders",
+            "targetObjectKey": "invoices"
+        },
+        {
+            "key": "invoice-match",
+            "name": "Invoice match result",
+            "cardinality": "one-to-one",
+            "sourceObjectKey": "invoices",
+            "targetObjectKey": "invoice-match-results"
+        }
+    ]
+}

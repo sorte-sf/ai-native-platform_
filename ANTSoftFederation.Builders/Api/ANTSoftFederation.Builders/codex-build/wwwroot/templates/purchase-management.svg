@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560">
+  <rect width="960" height="560" rx="24" fill="#f2f2f2"/>
+  <rect x="24" y="24" width="912" height="512" rx="18" fill="#fff"/>
+  <path d="M42 24h190v512H42q-18 0-18-18V42q0-18 18-18" fill="#202334"/>
+  <circle cx="61" cy="63" r="17" fill="#febf32"/><path d="M52 57h18v13H52zM55 53h12v4H55z" fill="#202334"/>
+  <g font-family="Arial,sans-serif" font-size="15" fill="#fff">
+    <text x="88" y="68" font-size="18" font-weight="700">Purchase Management</text>
+    <text x="52" y="124" fill="#d9d3ef">PROCUREMENT</text>
+    <rect x="38" y="139" width="166" height="38" rx="8" fill="#5c449b"/><text x="55" y="164">▦　Dashboard</text>
+    <text x="55" y="210">▣　Purchase Requests</text><text x="55" y="254">✓　Approvals</text>
+    <text x="55" y="298">▤　RFQs &amp; Quotes</text><text x="55" y="342">▣　Purchase Orders</text>
+    <text x="55" y="386">▧　Receiving</text><text x="55" y="430">▤　Invoices</text>
+  </g>
+  <g font-family="Arial,sans-serif" fill="#1f2937">
+    <text x="263" y="68" font-size="25" font-weight="700">Procurement overview</text>
+    <text x="263" y="94" font-size="13" fill="#667085">Requests, supplier commitments and delivery progress</text>
+  </g>
+  <g><rect x="260" y="117" width="202" height="94" rx="12" fill="#f7f5fb"/><rect x="478" y="117" width="202" height="94" rx="12" fill="#edf8f4"/><rect x="696" y="117" width="212" height="94" rx="12" fill="#fff8e5"/></g>
+  <g font-family="Arial,sans-serif"><text x="279" y="148" font-size="14" fill="#667085">REQUESTS</text><text x="279" y="188" font-size="31" font-weight="700" fill="#302766">18</text><text x="497" y="148" font-size="14" fill="#667085">SUPPLIERS</text><text x="497" y="188" font-size="31" font-weight="700" fill="#11805f">42</text><text x="715" y="148" font-size="14" fill="#667085">OPEN ORDERS</text><text x="715" y="188" font-size="31" font-weight="700" fill="#9a6b00">7</text></g>
+  <rect x="260" y="229" width="648" height="278" rx="12" fill="#fff" stroke="#e5e7eb"/>
+  <text x="281" y="262" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#1f2937">Recent purchase requests</text>
+  <rect x="280" y="280" width="608" height="38" rx="6" fill="#f7f5fb"/>
+  <g font-family="Arial,sans-serif" font-size="12" fill="#667085"><text x="296" y="304">REQUEST</text><text x="438" y="304">TITLE</text><text x="650" y="304">STATUS</text><text x="786" y="304">ESTIMATED TOTAL</text></g>
+  <g font-family="Arial,sans-serif" font-size="13" fill="#344054"><text x="296" y="352">PR-2026-014</text><text x="438" y="352">Laptops for design team</text><text x="650" y="352">Pending approval</text><text x="786" y="352">$7,500</text><text x="296" y="398">PR-2026-013</text><text x="438" y="398">Office supplies · Q4</text><text x="650" y="398">In procurement</text><text x="786" y="398">$1,240</text><text x="296" y="444">PR-2026-012</text><text x="438" y="444">Network maintenance</text><text x="650" y="444">Approved</text><text x="786" y="444">$4,800</text></g>
+  <path d="M280 372h608M280 418h608M280 464h608" stroke="#eaecf0"/>
+</svg>

@@ -212,7 +212,7 @@ public sealed class BuilderMetadataService(BuilderDbContext db)
             }
             foreach (var workflow in manifest.Workflows ?? Array.Empty<TemplateWorkflow>())
             {
-                ValidateWorkflowDefinition(workflow.DefinitionJson);
+                ValidateWorkflowDefinition(workflow.DefinitionJson, requireExecutable: false);
                 db.Workflows.Add(new BuilderWorkflow
                 {
                     TenantId = request.TenantId,
@@ -600,7 +600,7 @@ public sealed class BuilderMetadataService(BuilderDbContext db)
         var key = request.Key.Trim().ToLowerInvariant();
         if (!System.Text.RegularExpressions.Regex.IsMatch(key, @"\A[a-z][a-z0-9-]{0,79}\z")) throw new ArgumentException("Workflow key must be a lowercase slug.");
         if (await db.Workflows.AnyAsync(x => x.TenantId == request.TenantId && x.ApplicationId == request.ApplicationId && x.Key == key, token)) throw new InvalidOperationException("A workflow with this key already exists in the application.");
-        ValidateWorkflowDefinition(request.DefinitionJson);
+        ValidateWorkflowDefinition(request.DefinitionJson, requireExecutable: false);
         var entity = new BuilderWorkflow { TenantId = request.TenantId, ApplicationId = request.ApplicationId, Key = key, Name = request.Name.Trim(), DefinitionJson = request.DefinitionJson };
 
         db.Workflows.Add(entity); await db.SaveChangesAsync(token); return entity;
@@ -617,7 +617,7 @@ public sealed class BuilderMetadataService(BuilderDbContext db)
             ?? throw new KeyNotFoundException("Workflow was not found.");
         if (workflow.Status != DefinitionStatus.Draft) throw new InvalidOperationException("Only draft workflows can be edited.");
         if (string.IsNullOrWhiteSpace(request.Name)) throw new ArgumentException("Workflow name is required.");
-        ValidateWorkflowDefinition(request.DefinitionJson);
+        ValidateWorkflowDefinition(request.DefinitionJson, requireExecutable: false);
         workflow.Name = request.Name.Trim();
         workflow.DefinitionJson = request.DefinitionJson;
         workflow.UpdatedAt = DateTimeOffset.UtcNow;
@@ -682,7 +682,7 @@ public sealed class BuilderMetadataService(BuilderDbContext db)
     {
         var workflow = await db.Workflows.SingleOrDefaultAsync(x => x.Id == workflowId && x.TenantId == tenantId, token) ?? throw new KeyNotFoundException("Workflow was not found.");
         if (workflow.Status != DefinitionStatus.Draft) throw new InvalidOperationException("Only draft workflows can be published. Reactivate archived workflows instead.");
-        ValidateWorkflowDefinition(workflow.DefinitionJson);
+        ValidateWorkflowDefinition(workflow.DefinitionJson, requireExecutable: true);
         workflow.Status = DefinitionStatus.Published; workflow.Version++; workflow.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(token); return workflow;
     }
@@ -709,7 +709,7 @@ public sealed class BuilderMetadataService(BuilderDbContext db)
         return workflow;
     }
 
-    private static void ValidateWorkflowDefinition(string definitionJson)
+    private static void ValidateWorkflowDefinition(string definitionJson, bool requireExecutable = true)
     {
         using var document = JsonDocument.Parse(definitionJson);
         var root = document.RootElement;
@@ -717,6 +717,13 @@ public sealed class BuilderMetadataService(BuilderDbContext db)
             throw new ArgumentException("Workflow definition must be a JSON object.");
         if (root.TryGetProperty("purchaseApproval", out _) && !PurchaseApprovalDefinition.TryParse(definitionJson, out _))
             throw new ArgumentException("Purchase approval workflow configuration is invalid. Check its request fields and approval tasks.");
+        if (WorkflowGraphInterpreter.HasGraph(definitionJson))
+        {
+            if (requireExecutable) _ = WorkflowGraphInterpreter.Parse(definitionJson);
+            else if (!root.TryGetProperty("connections", out var connections) || connections.ValueKind != JsonValueKind.Array)
+                throw new ArgumentException("Workflow graph connections must be an array.");
+            return;
+        }
         if (!root.TryGetProperty("tasks", out var tasks)) return;
         if (tasks.ValueKind != JsonValueKind.Array)
             throw new ArgumentException("Workflow tasks must be an array.");

@@ -374,11 +374,12 @@ public static class ApplicationServiceExtensions
         // The Ollama integration creates these named clients. Local inference can
         // exceed the shared 30-second resilience budget; never retry generation.
         // Keep service discovery/telemetry, and leave other HTTP clients unchanged.
+        var localAiTimeout = LocalAiTimeoutOptions.GetRequestTimeout(builder.Configuration);
         foreach (var connectionName in new[] { "ollama-chat", "ollama-embeddings" })
         {
 #pragma warning disable EXTEXP0001 // Supported per-client opt-out from the shared resilience pipeline.
             builder.Services.AddHttpClient($"{connectionName}_httpClient", client =>
-                client.Timeout = TimeSpan.FromMinutes(3) + TimeSpan.FromSeconds(10))
+                client.Timeout = localAiTimeout + TimeSpan.FromSeconds(30))
                 .RemoveAllResilienceHandlers();
 #pragma warning restore EXTEXP0001
         }

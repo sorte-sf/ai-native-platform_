@@ -18,6 +18,28 @@ public sealed class TenantSubscriptionsEndpoints : IAppEndPoints
             return Results.Ok(plans);
         });
 
+        routes.MapGet("/available-plans", async (ANTSoftPortalDbContext db, CancellationToken ct) =>
+        {
+            var plans = await db.SubscriptionPlans.AsNoTracking().Where(x => x.IsAvailable).OrderBy(x => x.Price).ThenBy(x => x.Name)
+                .Select(x => new PlanResponse(x.Id, x.Name, x.Description, x.MaxApplications, x.MaxUsers, x.DurationMonths, x.Price, x.Currency, x.IsAvailable))
+                .ToListAsync(ct);
+            return Results.Ok(plans);
+        });
+
+        routes.MapGet("/current", async (ClaimsPrincipal user, ANTSoftPortalDbContext db, CancellationToken ct) =>
+        {
+            var tenantClaim = user.FindFirstValue("tenant_id") ?? user.FindFirstValue("company_id") ?? user.FindFirstValue("companyId");
+            if (!Guid.TryParse(tenantClaim, out var tenantId) || tenantId == Guid.Empty) return Results.Forbid();
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var current = await db.TenantSubscriptions.IgnoreQueryFilters().AsNoTracking()
+                .Where(x => x.PortalTenantId == tenantId && x.Status == TenantSubscriptionStatus.Active && x.StartsOn <= today && x.EndsOn >= today)
+                .OrderByDescending(x => x.StartsOn)
+                .Select(x => new CurrentSubscriptionResponse(x.Id, x.PlanName, x.MaxApplications, x.MaxUsers,
+                    x.DurationMonths, x.PlanPrice, x.PlanCurrency, x.StartsOn, x.EndsOn, x.Status.ToString()))
+                .FirstOrDefaultAsync(ct);
+            return Results.Ok(new { tenantId, subscription = current });
+        });
+
         routes.MapPost("/plans", async (SavePlanRequest request, ClaimsPrincipal user, ANTSoftPortalDbContext db, CancellationToken ct) =>
         {
             if (!IsSystemAdmin(user)) return Results.Forbid();
@@ -149,6 +171,7 @@ public sealed class TenantSubscriptionsEndpoints : IAppEndPoints
     public sealed record AssignSubscriptionRequest(Guid PlanId, DateOnly? StartsOn, DateOnly? EndsOn, TenantSubscriptionStatus Status = TenantSubscriptionStatus.Active, string? Notes = null);
     public sealed record SavePaymentRequest(decimal Amount, string? Currency, TenantSubscriptionPaymentStatus Status, DateTimeOffset? PaidAt, string? PaymentMethod, string? ProviderReference, string? Notes);
     public sealed record PlanResponse(Guid Id, string Name, string? Description, int MaxApplications, int MaxUsers, int DurationMonths, decimal? Price, string Currency, bool IsAvailable);
+    public sealed record CurrentSubscriptionResponse(Guid Id, string PlanName, int MaxApplications, int MaxUsers, int DurationMonths, decimal? Price, string Currency, DateOnly StartsOn, DateOnly EndsOn, string Status);
     public sealed record TenantSubscriptionResponse(Guid TenantId, string Code, string Name, bool IsTenantActive, Guid? SubscriptionId, Guid? PlanId, string? PlanName, DateOnly? StartsOn, DateOnly? EndsOn);
     public sealed record SubscriptionHistoryResponse(Guid Id, string PlanName, int MaxApplications, int MaxUsers, int DurationMonths, decimal? PlanPrice, string PlanCurrency, DateOnly StartsOn, DateOnly EndsOn, TenantSubscriptionStatus Status, string? Notes, List<PaymentResponse> Payments);
     public sealed record PaymentResponse(Guid Id, Guid SubscriptionId, decimal Amount, string Currency, TenantSubscriptionPaymentStatus Status, DateTimeOffset? PaidAt, string? PaymentMethod, string? ProviderReference, string? Notes, DateTimeOffset CreatedAt);

@@ -1,41 +1,46 @@
+
+using Figgle.Fonts;
+using SorteFederation.PaymentGateway;
+using SorteFederation.PaymentGateway.Abstractions;
+using SorteFederation.PaymentGateway.Interfaces;
+using SorteFederation.PaymentGateway.Providers.Iyzico;
+using SorteFederation.PaymentGateway.Providers.PayPal;
+using SorteFederation.PaymentGateway.Providers.Stripe;
+using SorteFederation.Shared;
+using System.Text.Json.Serialization;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.Configure<PaymentTenantsOptions>(builder.Configuration.GetSection("Payments"));
+builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+// builder.Services.AddCors(o => o.AddDefaultPolicy(p => p.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod()));
+
+builder.Services.ConfigureCorsPolicy();
+
+builder.Services.AddPaymentPlatform(p => p
+    .AddStripe()
+    .AddIyzico()
+    .AddPayPal()
+    .UseTenantConfigStore<ConfigurationTenantConfigStore>()
+    .WithDefaultProvider(PaymentProviderType.Stripe)
+    .WithRouting(r => r
+        .When(c => c.Currency == "TRY").Use(PaymentProviderType.Iyzico)
+        .When(c => c.Method == PaymentMethod.Wallet).Use(PaymentProviderType.PayPal))
+    .WithFallback(PaymentProviderType.Stripe, PaymentProviderType.PayPal));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+app.UseCors("SortePolicy");
 
-app.UseHttpsRedirection();
+app.UseMiddleware<PaymentExceptionMiddleware>();
+app.MapPaymentEndpoints();
+app.MapWebhookEndpoints();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+var figgleText = FiggleFonts.Standard.Render(builder.Configuration.GetSection("app:name").Value ?? "Sorte-Gateway");
+app.MapGet("/", ctx => ctx.Response.WriteAsync(figgleText));
 
 app.Run();
 
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+
+public partial class Program; 

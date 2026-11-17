@@ -1,0 +1,67 @@
+[
+  {
+    "label": "Dashboard",
+    "icon": "dashboard",
+    "route": "/dashboard"
+  },
+  {
+    "label": "Antson Agent",
+    "icon": "comment",
+    "route": "/antsoft-agent"
+  },
+  {
+    "label": "Portal",
+    "icon": "users",
+    "route": "/portal",
+    "children": [
+      {
+        "label": "Applications",
+        "route": "/portal/applications"
+      },
+      {
+        "label": "Companies",
+        "route": "/portal/companies"
+      },
+      {
+        "label": "Application Issues",
+        "route": "/portal/application-issues"
+      }
+    ]
+  },
+  {
+    "label": "custom",
+    "icon": "governance",
+    "roles": [],
+    "children": []
+  },
+  {
+    "label": "Parametreler",
+    "icon": "users",
+    "route": "/parameters",
+    "children": [
+      {
+        "label": "Countries",
+        "route": "/parameters/countries"
+      },
+      {
+        "label": "States",
+        "route": "/parameters/states"
+      }
+    ]
+  },
+  {
+    "label": "Yönetim",
+    "icon": "users",
+    "route": "/management",
+    "children": [
+      {
+        "label": "Users",
+        "route": "/management/users"
+      },
+      {
+        "label": "Roles",
+        "route": "/management/roles"
+      }
+    ]
+  }
+]

@@ -9,6 +9,7 @@ public sealed record ResolvedAiPolicy(
     string? Endpoint,
     string? Model,
     string? ApiKeyReference,
+    string? ApiKey,
     string AuthScheme,
     long MonthlyTokenLimit,
     int MonthlyRequestLimit,
@@ -16,8 +17,21 @@ public sealed record ResolvedAiPolicy(
 
 public sealed class TenantAiPolicyService(BuilderDbContext db, IConfiguration configuration)
 {
-    public async Task<ResolvedAiPolicy> ResolveAsync(Guid tenantId, string feature, CancellationToken token)
+    public async Task<ResolvedAiPolicy> ResolveAsync(Guid tenantId, string feature, CancellationToken token, string? userId = null)
     {
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            var userModel = await db.AiUserModels.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(x =>
+                x.TenantId == tenantId && x.UserId == userId && x.RecordState == RecordState.Active, token);
+            if (userModel is not null)
+            {
+                var limits = await db.AiTenantPolicies.AsNoTracking().SingleOrDefaultAsync(x => x.TenantId == tenantId, token);
+                return new ResolvedAiPolicy(tenantId, "CustomerCloud", userModel.Provider, userModel.Endpoint,
+                    userModel.Model, null, userModel.ApiKey,
+                    userModel.AuthScheme, limits?.MonthlyTokenLimit ?? 100_000,
+                    limits?.MonthlyRequestLimit ?? 1_000, limits?.MaxOutputTokens ?? 4_096);
+            }
+        }
         var stored = await db.AiTenantPolicies.AsNoTracking().SingleOrDefaultAsync(x => x.TenantId == tenantId, token);
         if (stored is not null)
         {
@@ -25,8 +39,9 @@ public sealed class TenantAiPolicyService(BuilderDbContext db, IConfiguration co
             return new ResolvedAiPolicy(tenantId, stored.Mode,
                 string.IsNullOrWhiteSpace(stored.Provider) && platformManaged ? configuration["AI:Provider"] ?? "openai-compatible" : stored.Provider,
                 stored.Endpoint ?? (platformManaged ? configuration["AI:Endpoint"] : null),
-                stored.Model ?? (platformManaged ? configuration["AI:Model"] : null),
+                stored.Model ?? (platformManaged ? configuration["AI:Model"] : stored.Mode.Equals("Local", StringComparison.OrdinalIgnoreCase) ? configuration["AI:Local:Model"] ?? "qwen3:8b" : null),
                 stored.ApiKeyReference ?? (platformManaged ? configuration["AI:ApiKeyReference"] : null),
+                stored.PersonalApiKey,
                 platformManaged ? configuration["AI:AuthScheme"] ?? stored.AuthScheme : stored.AuthScheme,
                 stored.MonthlyTokenLimit, stored.MonthlyRequestLimit, stored.MaxOutputTokens);
         }
@@ -38,8 +53,9 @@ public sealed class TenantAiPolicyService(BuilderDbContext db, IConfiguration co
             ? localDesignerDefault ? "Local" : "Disabled"
             : globalProvider.Equals("local", StringComparison.OrdinalIgnoreCase) || globalProvider.Equals("ollama", StringComparison.OrdinalIgnoreCase)
                 ? "Local" : "PlatformManaged";
-        return new ResolvedAiPolicy(tenantId, mode, globalProvider,
-            configuration["AI:Endpoint"], configuration["AI:Model"], configuration["AI:ApiKeyReference"],
+        return new ResolvedAiPolicy(tenantId, mode, mode.Equals("Local", StringComparison.OrdinalIgnoreCase) && globalProvider.Equals("disabled", StringComparison.OrdinalIgnoreCase) ? "ollama" : globalProvider,
+            configuration["AI:Endpoint"], configuration["AI:Model"] ?? configuration["AI:Local:Model"] ?? "qwen3:8b", configuration["AI:ApiKeyReference"],
+            null,
             configuration["AI:AuthScheme"] ?? "bearer", 100_000, 1_000, 4_096);
     }
 
@@ -58,7 +74,8 @@ public sealed class TenantAiPolicyService(BuilderDbContext db, IConfiguration co
             if (!Uri.TryCreate(request.Endpoint, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps ||
                 !string.IsNullOrEmpty(uri.UserInfo) || string.IsNullOrWhiteSpace(request.Model))
                 throw new ArgumentException("Cloud AI requires an HTTPS endpoint and model name.");
-            if (string.IsNullOrWhiteSpace(request.ApiKeyReference))
+            if (string.IsNullOrWhiteSpace(request.ApiKeyReference) && string.IsNullOrWhiteSpace(request.ApiKey) &&
+                string.IsNullOrWhiteSpace((await db.AiTenantPolicies.AsNoTracking().SingleOrDefaultAsync(x => x.TenantId == request.TenantId, token))?.PersonalApiKey))
                 throw new ArgumentException("Customer-managed cloud AI requires a secure API-key reference.");
         }
         if (request.Mode.Equals("PlatformManaged", StringComparison.OrdinalIgnoreCase) &&
@@ -72,11 +89,15 @@ public sealed class TenantAiPolicyService(BuilderDbContext db, IConfiguration co
             policy = new BuilderAiTenantPolicy { TenantId = request.TenantId };
             db.AiTenantPolicies.Add(policy);
         }
+        if (!string.IsNullOrWhiteSpace(request.ApiKey) && !string.IsNullOrWhiteSpace(policy.ApiKeyReference))
+            throw new ArgumentException("A secure API-key reference is already managed for this tenant. Ask an administrator to change the AI policy.");
         policy.Mode = request.Mode;
         policy.Provider = request.Provider?.Trim() ?? "";
         policy.Endpoint = request.Endpoint?.Trim();
         policy.Model = request.Model?.Trim();
-        policy.ApiKeyReference = request.ApiKeyReference?.Trim();
+        if (!string.IsNullOrWhiteSpace(request.ApiKey)) policy.PersonalApiKey = request.ApiKey.Trim();
+        else if (!request.KeepExistingApiKey) policy.PersonalApiKey = null;
+        if (!string.IsNullOrWhiteSpace(request.ApiKeyReference)) policy.ApiKeyReference = request.ApiKeyReference.Trim();
         policy.AuthScheme = request.AuthScheme?.Trim().ToLowerInvariant() is "api-key" ? "api-key" : "bearer";
         policy.MonthlyTokenLimit = request.MonthlyTokenLimit;
         policy.MonthlyRequestLimit = request.MonthlyRequestLimit;
@@ -85,7 +106,7 @@ public sealed class TenantAiPolicyService(BuilderDbContext db, IConfiguration co
         policy.Version++;
         await db.SaveChangesAsync(token);
         return new ResolvedAiPolicy(policy.TenantId, policy.Mode, policy.Provider, policy.Endpoint, policy.Model,
-            policy.ApiKeyReference, policy.AuthScheme, policy.MonthlyTokenLimit, policy.MonthlyRequestLimit, policy.MaxOutputTokens);
+            policy.ApiKeyReference, policy.PersonalApiKey, policy.AuthScheme, policy.MonthlyTokenLimit, policy.MonthlyRequestLimit, policy.MaxOutputTokens);
     }
 }
 
@@ -99,4 +120,6 @@ public sealed record UpdateTenantAiPolicyRequest(
     string? AuthScheme,
     long MonthlyTokenLimit,
     int MonthlyRequestLimit,
-    int MaxOutputTokens);
+    int MaxOutputTokens,
+    string? ApiKey = null,
+    bool KeepExistingApiKey = true);

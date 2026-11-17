@@ -181,14 +181,11 @@ public static IEndpointRouteBuilder MapApplicationsEndpoints(IEndpointRouteBuild
 
         endpoints.MapPost("/applications", async (CreateApplicationRequest request, ClaimsPrincipal user, BuilderMetadataService service, CancellationToken token) =>
         {
-            if (!user.IsInRole(BuilderRoleNames.SystemAdmin) && !user.IsInRole(BuilderRoleNames.TenantAdmin) && !user.IsInRole(BuilderRoleNames.Developer))
+            if (!BuilderApplicationCreationPolicy.CanCreateForTenant(user, request.TenantId, out var tenantId))
                 return Results.Forbid();
-            var claimedTenant = user.FindFirstValue("tenant_id") ?? user.FindFirstValue("company_id") ?? user.FindFirstValue("companyId");
-            if (!user.IsInRole(BuilderRoleNames.SystemAdmin) &&
-                (!Guid.TryParse(claimedTenant, out var tenantId) || tenantId != request.TenantId)) return Results.Forbid();
             try
             {
-                return Results.Ok(await service.CreateApplication(request, token, user.IsInRole(BuilderRoleNames.SystemAdmin)));
+                return Results.Ok(await service.CreateApplication(request with { TenantId = tenantId }, token, user.IsInRole(BuilderRoleNames.SystemAdmin)));
             }
             catch (ApplicationKeyConflictException ex)
             {

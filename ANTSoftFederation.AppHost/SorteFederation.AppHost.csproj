@@ -54,6 +54,7 @@
 		<ProjectReference Include="..\ANTSoftFederation.DesignerStudio\SorteFederation.DesignerStudio.csproj" /> 
 		<ProjectReference Include="..\ANTSoftFederation.LoadBalancing\SorteFederation.LoadBalancing.csproj" /> 
 		<ProjectReference Include="..\ANTSoftFederation.Logger\SorteFederation.Logger.csproj" /> 
+		
 		<ProjectReference Include="..\ANTSoftFederation.PaymentGateway\SorteFederation.PaymentGateway.csproj" /> 
 		
 		<ProjectReference Include="..\ANTSoftFederation.Portal\SorteFederation.Portal.csproj" /> 

@@ -413,7 +413,8 @@ namespace SorteFederation.Builders.Migrations.TenantRuntimeDb
                     b.HasIndex("TenantId", "CreatedAt");
 
                     b.HasIndex("TenantId", "WorkflowId", "RecordId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 0");
 
                     b.ToTable("WorkflowInstances", "builders_runtime");
                 });

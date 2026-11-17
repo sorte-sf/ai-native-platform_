@@ -1,15 +1,18 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-COPY Api/SorteFederation.Builders/ ./Api/SorteFederation.Builders/
-COPY Api/SorteFederation.EncryptEFCoreColumn/ ./Api/SorteFederation.EncryptEFCoreColumn/
-COPY Api/SorteFederation.GlobalEnums/ ./Api/SorteFederation.GlobalEnums/
-COPY Api/SorteFederation.KeyVault/ ./Api/SorteFederation.KeyVault/
-COPY Api/SorteFederation.Logger/ ./Api/SorteFederation.Logger/
-COPY Api/SorteFederation.ServiceDefaults/ ./Api/SorteFederation.ServiceDefaults/
-COPY Api/SorteFederation.Shared/ ./Api/SorteFederation.Shared/
-WORKDIR /src/Api/SorteFederation.Builders
+
+COPY Api/ANTSoftFederation.Builders/ Api/ANTSoftFederation.Builders/
+COPY Api/ANTSoftFederation.EncryptEFCoreColumn/ Api/ANTSoftFederation.EncryptEFCoreColumn/
+COPY Api/ANTSoftFederation.GlobalEnums/ Api/ANTSoftFederation.GlobalEnums/
+COPY Api/ANTSoftFederation.KeyVault/ Api/ANTSoftFederation.KeyVault/
+COPY Api/ANTSoftFederation.Logger/ Api/ANTSoftFederation.Logger/
+COPY Api/ANTSoftFederation.ServiceDefaults/ Api/ANTSoftFederation.ServiceDefaults/
+COPY Api/ANTSoftFederation.Shared/ Api/ANTSoftFederation.Shared/
+COPY Clients/AntsoftBuilder/src/app/core/builders/page-components.v1.json Clients/AntsoftBuilder/src/app/core/builders/page-components.v1.json
+
+WORKDIR /src/Api/ANTSoftFederation.Builders
 RUN dotnet restore SorteFederation.Builders.csproj
-RUN dotnet publish SorteFederation.Builders.csproj -c Release -o /app/publish --no-restore
+RUN dotnet publish SorteFederation.Builders.csproj --configuration Release --output /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app

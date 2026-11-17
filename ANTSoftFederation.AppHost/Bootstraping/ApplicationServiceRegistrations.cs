@@ -145,6 +145,24 @@ public static class ApplicationServiceRegistrations
         .WithOtlpExporter()
         ;
 
+        IResourceBuilder<ProjectResource> paymentService = builder.AddProject<SorteFederation_PaymentGateway>("sorte-payment-service")
+          .WithHttpHealthCheck("/health", endpointName: "http")
+          .WithEndpoint("http", delegate (EndpointAnnotation endpoint)
+          {
+              endpoint.IsProxied = false;
+          }).WithEnvironment(delegate (EnvironmentCallbackContext context)
+          {
+              context.EnvironmentVariables["Auth__Jwt__Issuer"] = "sorte.portal";
+              context.EnvironmentVariables["Auth__Jwt__Audience"] = "sorte";
+              context.EnvironmentVariables["Auth__Jwt__Key"] = jwtSigningKey.Resource;
+              context.EnvironmentVariables["RABBITMQ_DEFAULT_USER"] = rabbitUser.Resource;
+              context.EnvironmentVariables["RABBITMQ_DEFAULT_PASSWORD"] = rabbitPwd.Resource;
+          })
+          .WithReference(messaging)
+          .WaitFor(messaging)
+          .WithOtlpExporter()
+          ;
+
         var portainerAgentToken = builder.AddParameter("portainer-agent-token", secret: true);
         var portainer = builder.AddContainer("portainer", "portainer/portainer-ce", "lts")
                                .WithHttpEndpoint(targetPort: 9000, port: 9000, name: "portainer-http")
@@ -205,7 +223,7 @@ public static class ApplicationServiceRegistrations
             .WithOtlpExporter()
             .WithReference(realtimeService)
             ;
-         
+
         var platformBuilderPostgres = builder.AddPostgres("sorte-platform-builder-db", builder.ExecutionContext.IsPublishMode ? postgresUsr : null, builder.ExecutionContext.IsPublishMode ? postgresPwd : null).WithPgAdmin()
             .WithImage("pgvector/pgvector", "pg18")
             .WithVolume("sorte-platform-builder-data", "/var/lib/postgresql").WithLifetime(ContainerLifetime.Persistent);
@@ -226,7 +244,7 @@ public static class ApplicationServiceRegistrations
             .WithUrlForEndpoint("http", (EndpointReference e) => new ResourceUrlAnnotation
             {
                 Url = "/hangfire",
-                
+
                 DisplayText = "Sorte Hangfire Docs."
             })
 
@@ -257,9 +275,9 @@ public static class ApplicationServiceRegistrations
             .WaitFor(messaging)
             .WithOtlpExporter()
             .WithReference(realtimeService)
-            ;         
+            ;
 
-        var platformBlobPostgres = builder.AddPostgres("sorte-platform-blob-db", 
+        var platformBlobPostgres = builder.AddPostgres("sorte-platform-blob-db",
             builder.ExecutionContext.IsPublishMode ? postgresUsr : null, builder.ExecutionContext.IsPublishMode ? postgresPwd : null)
             .WithPgAdmin()
             .WithImage("pgvector/pgvector", "pg18")
@@ -302,7 +320,7 @@ public static class ApplicationServiceRegistrations
             .WaitFor(cache)
             .WithReference(messaging)
             .WaitFor(messaging)
-            .WithOtlpExporter() 
+            .WithOtlpExporter()
             ;
 
 
@@ -328,7 +346,7 @@ public static class ApplicationServiceRegistrations
         if (figmaExternalService is not null)
         {
             designStudioService.WithReference(figmaExternalService);
-        } 
+        }
 
         var gateway = builder.AddProject<Projects.SorteFederation_LoadBalancing>("sorte-gateway")
                              .WithEndpoint("http", endpoint =>
@@ -339,7 +357,7 @@ public static class ApplicationServiceRegistrations
                              .WithEnvironment("JwtSettings__Issuer", "sorte.portal")
                              .WithEnvironment("JwtSettings__Audience", "sorte")
                              .WithEnvironment("JwtSettings__SecretKey", jwtSigningKey)
-                             .WithUrlForEndpoint("http", url => url.DisplayText = "Gateway-Service") 
+                             .WithUrlForEndpoint("http", url => url.DisplayText = "Gateway-Service")
                              .WithReference(portalService)
                              .WithReference(platformBuilderService)
                              .WaitFor(platformBuilderService)

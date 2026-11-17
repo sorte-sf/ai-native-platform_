@@ -25,7 +25,10 @@ public sealed class TenantRuntimeDbContext(DbContextOptions<TenantRuntimeDbConte
         m.Entity<BuilderSupportComment>().HasQueryFilter(x => x.TenantId == TenantId);
         m.Entity<BuilderRecord>().Property(x=>x.DataJson).HasColumnType("jsonb"); 
         m.Entity<BuilderRecord>().HasIndex(x => new { x.TenantId, x.ObjectId, x.UpdatedAt });
-        m.Entity<BuilderRecordRelationship>().HasIndex(x=>new{x.TenantId,x.RelationshipId,x.SourceRecordId,x.TargetRecordId}).IsUnique(); m.Entity<BuilderWorkflowInstance>().HasIndex(x=>new{x.TenantId,x.WorkflowId,x.RecordId}).IsUnique();
+        m.Entity<BuilderRecordRelationship>().HasIndex(x=>new{x.TenantId,x.RelationshipId,x.SourceRecordId,x.TargetRecordId}).IsUnique();
+        m.Entity<BuilderWorkflowInstance>().HasIndex(x => new { x.TenantId, x.WorkflowId, x.RecordId }).IsUnique().HasFilter("\"Status\" = 0");
+        m.Entity<BuilderWorkflowInstance>().Property(x => x.Version).IsConcurrencyToken();
+        m.Entity<BuilderWorkflowTask>().Property(x => x.Version).IsConcurrencyToken();
         m.Entity<BuilderWorkflowInstance>().HasMany(x=>x.Tasks).WithOne(x=>x.WorkflowInstance).HasForeignKey(x=>x.WorkflowInstanceId).OnDelete(DeleteBehavior.Cascade); 
         m.Entity<BuilderWorkflowTask>().HasIndex(x=>new{x.TenantId,x.Completed,x.Activated,x.DueAt,x.RetryAt});
         m.Entity<BuilderWorkflowTask>().HasIndex(x => new { x.TenantId, x.Completed, x.AssignedTo, x.CreatedAt });

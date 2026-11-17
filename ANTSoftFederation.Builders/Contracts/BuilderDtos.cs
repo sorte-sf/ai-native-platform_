@@ -45,7 +45,7 @@ public sealed record CreateRecordRelationshipRequest(Guid TenantId, Guid Relatio
 public sealed record StartWorkflowRequest(Guid TenantId, Guid WorkflowId, Guid RecordId);
 public sealed record SubmitPurchaseApprovalRequest(Guid TenantId, Guid WorkflowId, Guid RecordId);
 public sealed record PurchaseApprovalDecisionRequest(Guid TenantId, string Decision, string? Comment = null);
-public sealed record CompleteWorkflowTaskRequest(Guid TenantId, Guid TaskId);
+public sealed record CompleteWorkflowTaskRequest(Guid TenantId, Guid TaskId, string? Outcome = null);
 public sealed record AssignWorkflowTaskRequest(Guid TenantId, string AssignedTo);
 public sealed record ExecuteConnectorRequest(Guid TenantId, Guid ConnectorId, string? PayloadJson);
 public sealed record CreateWorkflowTransitionRequest(Guid TenantId, Guid WorkflowId, string FromState, string ToState, string Action, string? ConditionJson);

@@ -1,0 +1,1 @@
+import{o as w}from"./chunk-Bhnl8H4w.js";var t;var p;w(()=>{t=[{path:``,loadComponent:()=>import(`./chunk-DVTPTYYF.js`),children:[{path:`:id`,loadComponent:()=>import(`./chunk-DBbMGqSu.js`)}]}],p=t})();export{p as default};
