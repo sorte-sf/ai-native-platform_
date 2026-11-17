@@ -1,1 +1,0 @@
-import{o as w}from"./chunk-Bhnl8H4w.js";var n;var t=w(()=>{n=500});export{t as n,n as t};

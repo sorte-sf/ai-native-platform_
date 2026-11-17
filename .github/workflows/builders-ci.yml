@@ -1,0 +1,47 @@
+name: Builders CI
+
+on:
+  push:
+    paths:
+      - 'Api/ANTSoftFederation.Builders/**'
+      - 'Api/ANTSoftFederation.EncryptEFCoreColumn/**'
+      - 'Api/ANTSoftFederation.GlobalEnums/**'
+      - 'Api/ANTSoftFederation.KeyVault/**'
+      - 'Api/ANTSoftFederation.Logger/**'
+      - 'Api/ANTSoftFederation.ServiceDefaults/**'
+      - 'Api/ANTSoftFederation.Shared/**'
+      - 'Clients/AntsoftBuilder/src/app/core/builders/page-components.v1.json'
+      - '.github/workflows/builders-ci.yml'
+      - '.github/workflows/builders-deploy.yml'
+  pull_request:
+    paths:
+      - 'Api/ANTSoftFederation.Builders/**'
+      - 'Api/ANTSoftFederation.EncryptEFCoreColumn/**'
+      - 'Api/ANTSoftFederation.GlobalEnums/**'
+      - 'Api/ANTSoftFederation.KeyVault/**'
+      - 'Api/ANTSoftFederation.Logger/**'
+      - 'Api/ANTSoftFederation.ServiceDefaults/**'
+      - 'Api/ANTSoftFederation.Shared/**'
+      - 'Clients/AntsoftBuilder/src/app/core/builders/page-components.v1.json'
+      - '.github/workflows/builders-ci.yml'
+      - '.github/workflows/builders-deploy.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Api/ANTSoftFederation.Builders
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore
+        run: dotnet restore SorteFederation.Builders.csproj
+      - name: Build
+        run: dotnet build SorteFederation.Builders.csproj --no-restore --configuration Release
+      - name: Install EF CLI
+        run: dotnet tool install --global dotnet-ef --version 10.0.12
+      - name: Verify EF migrations
+        run: dotnet ef migrations list --context BuilderDbContext --no-build --configuration Release

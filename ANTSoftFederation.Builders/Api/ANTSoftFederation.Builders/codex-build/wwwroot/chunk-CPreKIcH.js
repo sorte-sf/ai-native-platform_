@@ -1,1 +1,0 @@
-import{p as Pe}from"./chunk-CQyOCvf2.js";import{Ut as si}from"./chunk-BX3IEsAg.js";import{$t as R,o as $M}from"./chunk-awiZbSKC.js";import{o as w}from"./chunk-Bhnl8H4w.js";function P(o,r,e){return si(o,r,e,`Material`,`mat-input`)}var c;var M;var A=w(()=>{$M();Pe();c=new R(`MATERIAL_CONFIG`),M=new R(`MAT_INPUT_TYPE_OVERRIDE`)});export{c as i,M as n,P as r,A as t};
