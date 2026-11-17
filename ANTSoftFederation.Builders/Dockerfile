@@ -11,7 +11,7 @@ COPY ANTSoftFederation.Shared/ ANTSoftFederation.Shared/
 
 WORKDIR /src/ANTSoftFederation.Builders
 RUN dotnet restore SorteFederation.Builders.csproj
-RUN dotnet publish SorteFederation.Builders.csproj --configuration Release --output /app/publish --no-restore
+RUN mkdir -p /app/publish && dotnet publish SorteFederation.Builders.csproj --configuration Release --output /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
