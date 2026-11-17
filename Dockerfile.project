@@ -1,0 +1,24 @@
+# Generic Dockerfile for the .NET services in this repository.
+# Build from the /Api repository root and supply PROJECT_PATH and APP_ASSEMBLY.
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY . .
+
+ARG PROJECT_PATH
+RUN test -n "$PROJECT_PATH" \
+    && dotnet restore "$PROJECT_PATH" \
+    && mkdir -p /app/publish \
+    && dotnet publish "$PROJECT_PATH" --configuration Release --output /app/publish --no-restore
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+WORKDIR /app
+
+ARG APP_ASSEMBLY
+ENV APP_ASSEMBLY=${APP_ASSEMBLY}
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+
+COPY --from=build /app/publish .
+USER $APP_UID
+ENTRYPOINT ["sh", "-c", "exec dotnet \"$APP_ASSEMBLY\""]

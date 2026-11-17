@@ -61,7 +61,7 @@
 		<ProjectReference Include="..\ANTSoftFederation.Realtime\SorteFederation.Realtime.csproj" /> 
 		<ProjectReference Include="..\ANTSoftFederation.WebSite\SorteFederation.WebSite.csproj" />
 		
-		<!--<ProjectReference Include="..\ANTSoftFederation.PortalWeb\SorteFederation.PortalWeb.csproj" />-->
+		<ProjectReference Include="..\ANTSoftFederation.PortalWeb\SorteFederation.PortalWeb.csproj" />
 		
 	</ItemGroup>
 

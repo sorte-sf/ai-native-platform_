@@ -87,28 +87,7 @@ public static class ApplicationServiceRegistrations
             .WithEnvironment("RABBITMQ_DEFAULT_PASSWORD", rabbitPwd)
             .WithDataVolume("sorte-rabbitmq_vol")
             .WithLifetime(ContainerLifetime.Persistent);
-
-        /* var postgres = builder.AddPostgres("SorteMasterDatabase", userName: postgresUsr, password: postgresPwd, port: 5432)
-                               .WithDataVolume(name: "sorte_masterdb_vol", isReadOnly: false)
-                               .WithRepl()
-                               .WithPgAdmin(pgAdmin =>
-                               {
-                                  pgAdmin.WithHostPort(5050);
-                                  pgAdmin.WithContainerName("pgadmin");
-                                  pgAdmin.WithUrlForEndpoint("http", url => url.DisplayText = "Postgres-Admin");
-                                  pgAdmin.WithLifetime(ContainerLifetime.Persistent);
-                               })
-                               .WithImage("pgvector/pgvector", "pg18")
-                               .WithEnvironment("TZ", "Europe/Turkey")
-                               .OnConnectionStringAvailable(async (resource, evt, cancellationToken) =>
-                               {
-                                  var logger = evt.Services.GetRequiredService<ILogger<Program>>();
-                                  logger.LogInformation("✅ PostgreSQL with pgvector ready: {Name}", resource.Name);
-                               })
-                               .WithLifetime(ContainerLifetime.Persistent)
-                             ;*/
-
-
+         
         var ownerEmail = builder.AddParameter("n8n-owner-email");
         var ownerPasswordHash = builder.AddParameter("n8n-owner-password-hash", secret: true);
         var n8nEncryptionKey = builder.AddParameter("n8n-encryption-key", secret: true);
@@ -406,7 +385,7 @@ public static class ApplicationServiceRegistrations
                                    .WithOtlpExporter()
                                    ;
 
-        /* builder.AddProject<Projects.SorteFederation_PortalWeb>("sorte-portal-web")
+        builder.AddProject<Projects.SorteFederation_PortalWeb>("sorte-portal-web")
                                     .WithEndpoint("http", endpoint =>
                                     {
                                         endpoint.IsProxied = false;
@@ -415,7 +394,7 @@ public static class ApplicationServiceRegistrations
                                     .WithReference(cache)
                                     .WithVolume("data", "/data", env: "WEB_DATA_PATH")
                                     .WithOtlpExporter()
-                                    ;*/
+                                    ;
 
         /* var options = new DevTunnelOptions
          {

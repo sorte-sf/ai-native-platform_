@@ -1,0 +1,85 @@
+name: Build and Publish .NET Service Images
+
+on:
+  push:
+    paths:
+      - 'ANTSoftFederation.*/**'
+      - 'Dockerfile.project'
+      - '.dockerignore'
+      - '.github/workflows/services-deploy.yml'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - project: ANTSoftFederation.BlobApi/SorteFederation.BlobApi.csproj
+            assembly: SorteFederation.BlobApi.dll
+            image: sortefederation-blobapi
+          - project: ANTSoftFederation.Builders/SorteFederation.Builders.csproj
+            assembly: SorteFederation.Builders.dll
+            image: antsoft-builders
+          - project: ANTSoftFederation.DesignerStudio/SorteFederation.DesignerStudio.csproj
+            assembly: SorteFederation.DesignerStudio.dll
+            image: sortefederation-designerstudio
+          - project: ANTSoftFederation.LoadBalancing/SorteFederation.LoadBalancing.csproj
+            assembly: SorteFederation.LoadBalancing.dll
+            image: sortefederation-loadbalancing
+          - project: ANTSoftFederation.PaymentGateway/SorteFederation.PaymentGateway.csproj
+            assembly: SorteFederation.PaymentGateway.dll
+            image: sortefederation-paymentgateway
+          - project: ANTSoftFederation.Portal/SorteFederation.Portal.csproj
+            assembly: SorteFederation.Portal.dll
+            image: sortefederation-portal
+          # Buildable image, but this project is currently commented out in AppHost.
+          - project: ANTSoftFederation.PortalWeb/SorteFederation.PortalWeb.csproj
+            assembly: SorteFederation.PortalWeb.dll
+            image: sortefederation-portalweb
+          - project: ANTSoftFederation.Realtime/SorteFederation.Realtime.csproj
+            assembly: SorteFederation.Realtime.dll
+            image: sortefederation-realtime
+          # AppHost deploys this additional project as "sorte-web-site".
+          - project: ANTSoftFederation.WebSite/SorteFederation.WebSite.csproj
+            assembly: SorteFederation.WebSite.dll
+            image: sortefederation-website
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v5
+        id: metadata
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.project
+          push: true
+          build-args: |
+            PROJECT_PATH=${{ matrix.project }}
+            APP_ASSEMBLY=${{ matrix.assembly }}
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.metadata.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
