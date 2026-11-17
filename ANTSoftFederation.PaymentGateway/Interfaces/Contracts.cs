@@ -1,4 +1,3 @@
-using SorteFederation.PaymentGateway.Abstractions;
 
 namespace SorteFederation.PaymentGateway.Interfaces;
 

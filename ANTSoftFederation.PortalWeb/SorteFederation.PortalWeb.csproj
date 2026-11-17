@@ -19,13 +19,13 @@
 		<ProjectReference Include="..\ANTSoftFederation.Logger\SorteFederation.Logger.csproj" />
 		<ProjectReference Include="..\ANTSoftFederation.ServiceDefaults\SorteFederation.ServiceDefaults.csproj" />
 		<ProjectReference Include="..\ANTSoftFederation.ServiceDefaults\SorteFederation.ServiceDefaults.csproj" />
-		<ProjectReference Include="..\ANTSoftFederation.Shared\SorteFederation.Shared.csproj" /> 
+		<ProjectReference Include="..\ANTSoftFederation.Shared\SorteFederation.Shared.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="Data\placeholder.txt">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
+		<None Update="Data\placeholder.txt">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 </Project>

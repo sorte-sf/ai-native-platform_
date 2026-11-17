@@ -20,5 +20,7 @@ ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
 COPY --from=build /app/publish .
+RUN mkdir -p /app/Contents/Data /app/content/temp /data \
+    && chown -R ${APP_UID}:${APP_UID} /app /data
 USER $APP_UID
 ENTRYPOINT ["sh", "-c", "exec dotnet \"$APP_ASSEMBLY\""]

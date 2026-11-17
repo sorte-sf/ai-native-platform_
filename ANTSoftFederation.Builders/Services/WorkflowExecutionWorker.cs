@@ -1,6 +1,3 @@
-using SorteFederation.Builders.Data.Enums;
-using Microsoft.EntityFrameworkCore;
-
 namespace SorteFederation.Builders.Services;
 
 public sealed class WorkflowExecutionWorker(
@@ -37,6 +34,7 @@ public sealed class WorkflowExecutionWorker(
             db.ChangeTracker.Clear();
             await using var transaction = await db.Database.BeginTransactionAsync(token);
             var now = DateTimeOffset.UtcNow;
+
             var tasks = await db.WorkflowTasks.FromSqlInterpolated($"""
                 SELECT * FROM builders_runtime."WorkflowTasks"
                 WHERE "TenantId" = {tenantId} AND NOT "Completed" AND "Activated"
@@ -46,9 +44,12 @@ public sealed class WorkflowExecutionWorker(
                 """)
                 .Where(x => x.TenantId == tenantId && !x.Completed && x.Activated && x.WorkflowInstance.Status == WorkflowInstanceStatus.Running)
                 .ToListAsync(token);
+
             var instanceIds = tasks.Select(x => x.WorkflowInstanceId).Distinct().ToArray();
+
             var instances = await db.WorkflowInstances.Where(x => instanceIds.Contains(x.Id) && x.Status == WorkflowInstanceStatus.Running)
                 .ToDictionaryAsync(x => x.Id, token);
+
             foreach (var task in tasks)
             {
                 if (!instances.TryGetValue(task.WorkflowInstanceId, out var instance)) continue;

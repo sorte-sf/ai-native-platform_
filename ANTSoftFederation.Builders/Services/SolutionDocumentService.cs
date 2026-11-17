@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Xml.Linq;
+using Microsoft.Extensions.Configuration;
 using SorteFederation.Builders.Contracts;
 using SorteFederation.Builders.Data;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,8 @@ using UglyToad.PdfPig;
 namespace SorteFederation.Builders.Services;
 
 public sealed class SolutionDocumentService(BuilderDbContext metadata, KnowledgeService knowledge,
-    KnowledgeEmbeddingService embeddings, IHttpClientFactory clients, IHttpContextAccessor contextAccessor)
+    KnowledgeEmbeddingService embeddings, IHttpClientFactory clients, IHttpContextAccessor contextAccessor,
+    IConfiguration configuration)
 {
     public async Task<object> UploadAsync(Guid tenantId, Guid applicationId, IFormFile file, CancellationToken token)
     {
@@ -44,8 +46,9 @@ public sealed class SolutionDocumentService(BuilderDbContext metadata, Knowledge
             var pdfContent = new StreamContent(uploadStream);
             pdfContent.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
             multipart.Add(pdfContent, "file", name);
+            var blobApiBaseUrl = (configuration["BlobApi:BaseUrl"] ?? "http://antsoft-blob-service").TrimEnd('/');
             using var request = new HttpRequestMessage(HttpMethod.Post,
-                $"http://antsoft-blob-service/api/v1/applications/{applicationId}/documents?tenantId={tenantId}")
+                $"{blobApiBaseUrl}/api/v1/applications/{applicationId}/documents?tenantId={tenantId}")
             { Content = multipart };
             var authorization = contextAccessor.HttpContext?.Request.Headers.Authorization.ToString();
             if (!string.IsNullOrWhiteSpace(authorization))

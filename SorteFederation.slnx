@@ -19,4 +19,5 @@
   <Project Path="ANTSoftFederation.Realtime/SorteFederation.Realtime.csproj" />
   <Project Path="ANTSoftFederation.ServiceDefaults/SorteFederation.ServiceDefaults.csproj" />
   <Project Path="ANTSoftFederation.Shared/SorteFederation.Shared.csproj" />
+  <Project Path="ANTSoftFederation.WebSite/SorteFederation.WebSite.csproj" />
 </Solution>

@@ -4,9 +4,13 @@ using System.Text;
 
 namespace SorteFederation.Builders.Services;
 
-public sealed class ConnectorExecutionService(BuilderDbContext db, IHttpClientFactory clients, ISecretResolver secrets, AuditService audit, IHttpContextAccessor accessor, BuilderMetadataService authorization)
+public sealed class ConnectorExecutionService(BuilderDbContext db, IHttpClientFactory clients, ISecretResolver secrets, AuditService audit, IHttpContextAccessor accessor, BuilderMetadataService authorization, IConfiguration configuration)
 {
     private const long MaxResponseBytes = 4 * 1024 * 1024;
+    private readonly HashSet<string> _allowedHosts = (configuration.GetSection("Builders:Connectors:AllowedHosts").Get<string[]>() ?? [])
+        .Where(host => !string.IsNullOrWhiteSpace(host))
+        .Select(host => host.Trim().TrimEnd('.'))
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
     public async Task<IResult> Execute(ExecuteConnectorRequest request, CancellationToken token)
     {
         var connector = await db.Connectors.FindAsync([request.ConnectorId], token);
@@ -29,7 +33,8 @@ public sealed class ConnectorExecutionService(BuilderDbContext db, IHttpClientFa
         if (!config.RootElement.TryGetProperty("url", out var urlProperty) || !Uri.TryCreate(urlProperty.GetString(), UriKind.Absolute, out var url)) 
             return Results.BadRequest("Connector configuration requires a valid absolute url.");
 
-        if (!string.Equals(url.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) && !string.Equals(url.Host, "localhost", StringComparison.OrdinalIgnoreCase)) return Results.BadRequest("Only HTTPS connector URLs are allowed.");
+        if (!string.Equals(url.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)) return Results.BadRequest("Only HTTPS connector URLs are allowed.");
+        if (!_allowedHosts.Contains(url.IdnHost.TrimEnd('.'))) return Results.BadRequest("Connector host is not present in Builders:Connectors:AllowedHosts.");
         if (!await IsSafeDestination(url, token)) return Results.BadRequest("Connector URL resolves to a local or private network address, which is not allowed.");
 
         var method = config.RootElement.TryGetProperty("method", out var methodProperty) ? methodProperty.GetString() : "POST";
@@ -85,23 +90,38 @@ public sealed class ConnectorExecutionService(BuilderDbContext db, IHttpClientFa
 
     private static async Task<bool> IsSafeDestination(Uri url, CancellationToken token)
     {
-        if (string.Equals(url.Host, "localhost", StringComparison.OrdinalIgnoreCase)) return true;
         IPAddress[] addresses;
-        try { addresses = await Dns.GetHostAddressesAsync(url.Host, token); }
+        if (IPAddress.TryParse(url.Host, out var literal)) addresses = [literal];
+        else try { addresses = await Dns.GetHostAddressesAsync(url.IdnHost, token); }
         catch (SocketException) { return false; }
         return addresses.Length > 0 && addresses.All(IsPublicAddress);
     }
 
     private static bool IsPublicAddress(IPAddress address)
     {
-        if (IPAddress.IsLoopback(address) || address.IsIPv4MappedToIPv6 || address.Equals(IPAddress.Any) || address.Equals(IPAddress.IPv6Any)) return false;
+        if (IPAddress.IsLoopback(address) || address.IsIPv4MappedToIPv6 || address.Equals(IPAddress.Any) || address.Equals(IPAddress.IPv6Any) || address.Equals(IPAddress.IPv6Loopback)) return false;
         if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
         {
             var bytes = address.GetAddressBytes();
-            return !(bytes[0] == 10 || bytes[0] == 127 || (bytes[0] == 169 && bytes[1] == 254) ||
-                (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31) || (bytes[0] == 192 && bytes[1] == 168));
+            return !(bytes[0] == 0 || bytes[0] == 10 || bytes[0] == 127 ||
+                (bytes[0] == 100 && bytes[1] is >= 64 and <= 127) ||
+                (bytes[0] == 169 && bytes[1] == 254) ||
+                (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31) ||
+                (bytes[0] == 192 && (bytes[1] == 0 || bytes[1] == 168)) ||
+                (bytes[0] == 198 && bytes[1] is 18 or 19) || bytes[0] >= 224);
         }
-        var text = address.ToString();
-        return !(text.StartsWith("fc", StringComparison.OrdinalIgnoreCase) || text.StartsWith("fd", StringComparison.OrdinalIgnoreCase) || text.StartsWith("fe8", StringComparison.OrdinalIgnoreCase) || text.StartsWith("fe9", StringComparison.OrdinalIgnoreCase) || text.StartsWith("fea", StringComparison.OrdinalIgnoreCase) || text.StartsWith("feb", StringComparison.OrdinalIgnoreCase));
+        if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+        {
+            var bytes = address.GetAddressBytes();
+            var documentationRange = bytes[0] == 0x20 && bytes[1] == 0x01 && bytes[2] == 0x0d && bytes[3] == 0xb8;
+            var uniqueLocalRange = (bytes[0] & 0xfe) == 0xfc;
+            var siteLocalRange = bytes[0] == 0xfe && (bytes[1] & 0xc0) == 0xc0;
+            var teredoRange = bytes[0] == 0x20 && bytes[1] == 0x01 && bytes[2] == 0 && bytes[3] == 0;
+            var sixToFourRange = bytes[0] == 0x20 && bytes[1] == 0x02;
+            return !address.IsIPv6LinkLocal && !address.IsIPv6Multicast &&
+                !siteLocalRange && !teredoRange && !sixToFourRange && !uniqueLocalRange && !documentationRange;
+        }
+        return false;
     }
+
 }

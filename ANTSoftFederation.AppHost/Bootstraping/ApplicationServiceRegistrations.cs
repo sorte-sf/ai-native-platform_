@@ -88,23 +88,23 @@ public static class ApplicationServiceRegistrations
             .WithDataVolume("sorte-rabbitmq_vol")
             .WithLifetime(ContainerLifetime.Persistent);
          
-        var ownerEmail = builder.AddParameter("n8n-owner-email");
-        var ownerPasswordHash = builder.AddParameter("n8n-owner-password-hash", secret: true);
-        var n8nEncryptionKey = builder.AddParameter("n8n-encryption-key", secret: true);
+        //var ownerEmail = builder.AddParameter("n8n-owner-email");
+        //var ownerPasswordHash = builder.AddParameter("n8n-owner-password-hash", secret: true);
+        //var n8nEncryptionKey = builder.AddParameter("n8n-encryption-key", secret: true);
 
-        var n8n = builder.AddContainer("n8n", "n8nio/n8n", "latest")
-                         .WithHttpEndpoint(port: 5678, targetPort: 5678, name: "n8n-ui")
-                         .WithBindMount("./n8n-data", "/home/node/.n8n")
-                         .WithEnvironment("N8N_HOST", "0.0.0.0")
-                         .WithEnvironment("N8N_PORT", "5678")
-                         .WithEnvironment("WEBHOOK_URL", "http://localhost:5678/")
-                         .WithEnvironment("N8N_METRICS", "true")
-                         .WithEnvironment("N8N_ENCRYPTION_KEY", n8nEncryptionKey)
-                         .WithEnvironment("N8N_INSTANCE_OWNER_MANAGED_BY_ENV", "true")
-                         .WithEnvironment("N8N_INSTANCE_OWNER_EMAIL", ownerEmail)
-                         .WithEnvironment("N8N_INSTANCE_OWNER_PASSWORD_HASH", ownerPasswordHash)
-                         .WithLifetime(ContainerLifetime.Persistent)
-                         ;
+        //var n8n = builder.AddContainer("n8n", "n8nio/n8n", "latest")
+        //                 .WithHttpEndpoint(port: 5678, targetPort: 5678, name: "n8n-ui")
+        //                 .WithBindMount("./n8n-data", "/home/node/.n8n")
+        //                 .WithEnvironment("N8N_HOST", "0.0.0.0")
+        //                 .WithEnvironment("N8N_PORT", "5678")
+        //                 .WithEnvironment("WEBHOOK_URL", "http://localhost:5678/")
+        //                 .WithEnvironment("N8N_METRICS", "true")
+        //                 .WithEnvironment("N8N_ENCRYPTION_KEY", n8nEncryptionKey)
+        //                 .WithEnvironment("N8N_INSTANCE_OWNER_MANAGED_BY_ENV", "true")
+        //                 .WithEnvironment("N8N_INSTANCE_OWNER_EMAIL", ownerEmail)
+        //                 .WithEnvironment("N8N_INSTANCE_OWNER_PASSWORD_HASH", ownerPasswordHash)
+        //                 .WithLifetime(ContainerLifetime.Persistent)
+        //                 ;
 
         IResourceBuilder<ProjectResource> realtimeService = builder.AddProject<SorteFederation_Realtime>("sorte-realtime-service")
             .WithHttpHealthCheck("/health", endpointName: "http")

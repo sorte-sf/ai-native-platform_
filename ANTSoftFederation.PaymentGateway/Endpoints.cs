@@ -1,5 +1,3 @@
-using SorteFederation.PaymentGateway.Abstractions;
-using SorteFederation.PaymentGateway.Interfaces;
 
 namespace SorteFederation.PaymentGateway;
 
@@ -11,8 +9,7 @@ public sealed record CreatePaymentDto(
 public sealed record RefundDto(decimal? Amount);
 
 public static class Endpoints
-{
-    // TODO: derive the tenant from the authenticated principal (JWT claim / API key), not a client-supplied header.
+{ 
     private static string Tenant(HttpContext c) =>
         c.Request.Headers["X-Tenant-Id"].FirstOrDefault() ?? throw new PaymentValidationException("X-Tenant-Id header is required.");
     private static string IdemKey(HttpContext c) =>
@@ -70,12 +67,13 @@ public static class Endpoints
             if (!Enum.TryParse<PaymentProviderType>(provider, true, out var type)) return Results.NotFound();
 
             using var reader = new StreamReader(req.Body);
-            var payload = await reader.ReadToEndAsync(ct);                 // raw body: signature is computed over exact bytes
+            var payload = await reader.ReadToEndAsync(ct); 
             var headers = req.Headers.ToDictionary(h => h.Key, h => h.Value.ToString(), StringComparer.OrdinalIgnoreCase);
 
             await svc.HandleWebhookAsync(type, tenantKey, new WebhookContext(payload, headers), ct);
-            return Results.Ok();                                           // 2xx only after processing; providers retry on non-2xx
+            return Results.Ok(); 
         });
+
 }
 
 public sealed class PaymentExceptionMiddleware(RequestDelegate next, ILogger<PaymentExceptionMiddleware> log)
@@ -99,3 +97,4 @@ public sealed class PaymentExceptionMiddleware(RequestDelegate next, ILogger<Pay
         }
     }
 }
+
