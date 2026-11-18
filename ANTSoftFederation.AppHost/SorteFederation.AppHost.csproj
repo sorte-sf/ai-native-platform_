@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.6.5">
+﻿<Project Sdk="Aspire.AppHost.Sdk/17.0.0">
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
@@ -10,59 +10,53 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		
-		<PackageReference Include="Aspire.Hosting.DevTunnels" Version="13.6.5" />
-		
-		<PackageReference Include="Aspire.Hosting.Docker" Version="13.6.5" />
-		<PackageReference Include="Aspire.Hosting.Redis" Version="13.6.5" />
-		<PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.6.5" />
-		<PackageReference Include="Aspire.Hosting.RabbitMQ" Version="13.6.5" />
-		<PackageReference Include="Aspire.Hosting.Yarp" Version="13.6.5" />
-		<PackageReference Include="Aspire.RabbitMQ.Client" Version="13.6.5" />
-		
-		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.6.5" />
-		
-		<PackageReference Include="Scalar.Aspire" Version="1.0.1" />
 
-		<PackageVersion Include="VaultSharp" Version="1.17.5.1" />
-		<PackageVersion Include="VaultSharp.Extensions.Configuration" Version="1.0.5" />
+		<PackageReference Include="Aspire.Hosting.DevTunnels" Version="17.0.0" />
 
-		<PackageReference Include="Aspire.Hosting.Qdrant" Version="13.6.5" /> 
+		<PackageReference Include="Aspire.Hosting.Docker" Version="17.0.0" />
+		<PackageReference Include="Aspire.Hosting.Redis" Version="17.0.0" />
+		<PackageReference Include="Aspire.Hosting.PostgreSQL" Version="17.0.0" />
+		<PackageReference Include="Aspire.Hosting.RabbitMQ" Version="17.0.0" />
+		<PackageReference Include="Aspire.Hosting.Yarp" Version="17.0.0" />
+		<PackageReference Include="Aspire.RabbitMQ.Client" Version="17.0.0" />
 
+		<PackageReference Include="Aspire.Hosting.Qdrant" Version="17.0.0" />
 		<PackageReference Include="Aspire.Hosting.NodeJs" Version="9.5.2" />
-		<PackageReference Include="CommunityToolkit.Aspire.Hosting.NodeJS.Extensions" Version="9.9.0" /> 
+		<PackageReference Include="Aspire.Hosting.Seq" Version="17.0.0" />
+		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.6.5" />
 
+		<PackageReference Include="Scalar.Aspire" Version="1.0.1" />
+		<PackageReference Include="VaultSharp" Version="1.17.5.1" />
+		<PackageReference Include="VaultSharp.Extensions.Configuration" Version="1.1.6" />
 		<PackageReference Include="Pgvector" Version="0.3.2" />
 		<PackageReference Include="Pgvector.EntityFrameworkCore" Version="0.3.0" />
 
-		<PackageReference Include="CommunityToolkit.Aspire.Hosting.MailPit" Version="*" />
-
-		<PackageReference Include="Aspire.Hosting.Seq" Version="13.6.5" />
-
-		<PackageReference Include="CommunityToolkit.Aspire.Hosting.PostgreSQL.Extensions" Version="*" />
+		<PackageReference Include="CommunityToolkit.Aspire.Hosting.MailPit" Version="13.6.1" />
+		<PackageReference Include="CommunityToolkit.Aspire.Hosting.PostgreSQL.Extensions" Version="13.6.1" />
 		<PackageReference Include="CommunityToolkit.Aspire.Hosting.Stripe" Version="13.6.1" />
-		<PackageReference Include="CommunityToolkit.Aspire.Hosting.Ollama" Version="*" /> 
-		 
+		<PackageReference Include="CommunityToolkit.Aspire.Hosting.Ollama" Version="13.6.1" />
+		<PackageReference Include="CommunityToolkit.Aspire.Hosting.NodeJS.Extensions" Version="9.9.0" />
+
 		<PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
 		<PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.28.0" />
 
 	</ItemGroup>
-	
-	<ItemGroup> 
-		<ProjectReference Include="..\ANTSoftFederation.BlobApi\SorteFederation.BlobApi.csproj" /> 
-		<ProjectReference Include="..\ANTSoftFederation.Builders\SorteFederation.Builders.csproj" /> 
-		<ProjectReference Include="..\ANTSoftFederation.DesignerStudio\SorteFederation.DesignerStudio.csproj" /> 
-		<ProjectReference Include="..\ANTSoftFederation.LoadBalancing\SorteFederation.LoadBalancing.csproj" /> 
-		<ProjectReference Include="..\ANTSoftFederation.Logger\SorteFederation.Logger.csproj" /> 
-		
-		<ProjectReference Include="..\ANTSoftFederation.PaymentGateway\SorteFederation.PaymentGateway.csproj" /> 
-		
-		<ProjectReference Include="..\ANTSoftFederation.Portal\SorteFederation.Portal.csproj" /> 
-		<ProjectReference Include="..\ANTSoftFederation.Realtime\SorteFederation.Realtime.csproj" /> 
+
+	<ItemGroup>
+		<ProjectReference Include="..\ANTSoftFederation.BlobApi\SorteFederation.BlobApi.csproj" />
+		<ProjectReference Include="..\ANTSoftFederation.Builders\SorteFederation.Builders.csproj" />
+		<ProjectReference Include="..\ANTSoftFederation.DesignerStudio\SorteFederation.DesignerStudio.csproj" />
+		<ProjectReference Include="..\ANTSoftFederation.LoadBalancing\SorteFederation.LoadBalancing.csproj" />
+		<ProjectReference Include="..\ANTSoftFederation.Logger\SorteFederation.Logger.csproj" />
+
+		<ProjectReference Include="..\ANTSoftFederation.PaymentGateway\SorteFederation.PaymentGateway.csproj" />
+
+		<ProjectReference Include="..\ANTSoftFederation.Portal\SorteFederation.Portal.csproj" />
+		<ProjectReference Include="..\ANTSoftFederation.Realtime\SorteFederation.Realtime.csproj" />
 		<ProjectReference Include="..\ANTSoftFederation.WebSite\SorteFederation.WebSite.csproj" />
-		
+
 		<ProjectReference Include="..\ANTSoftFederation.PortalWeb\SorteFederation.PortalWeb.csproj" />
-		
+
 	</ItemGroup>
 
 </Project>
