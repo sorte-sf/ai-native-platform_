@@ -42,8 +42,7 @@ public sealed class RuleDefinitionService(BuilderDbContext db, RulesRuntimeServi
             throw new ArgumentException("Rule metadata exceeds the supported size limits.");
         if (await db.Rules.AnyAsync(x => x.TenantId == request.TenantId && x.ApplicationId == request.ApplicationId && x.Key == request.Key.Trim(), token))
             throw new InvalidOperationException("A rule with this key already exists in the application.");
-        try { using var _ = JsonDocument.Parse(request.DefinitionJson); }
-        catch (JsonException) { throw new ArgumentException("DefinitionJson must be valid JSON."); }
+        RulesRuntimeService.ValidateDefinition(request.DefinitionJson);
         var rule = new BuilderRule { TenantId = request.TenantId, ApplicationId = request.ApplicationId, Key = request.Key.Trim(), Name = request.Name.Trim(), DefinitionJson = request.DefinitionJson, Enabled = request.Enabled };
         db.Rules.Add(rule); await db.SaveChangesAsync(token); await RecordAudit(request.TenantId, "rule.created", rule.Id, token); return rule;
     }
@@ -59,7 +58,7 @@ public sealed class RuleDefinitionService(BuilderDbContext db, RulesRuntimeServi
             throw new InvalidOperationException("The rule was changed by another user. Reload it before saving.");
         if (string.IsNullOrWhiteSpace(request.Key) || string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.DefinitionJson)) throw new ArgumentException("Key, name, and definition are required.");
         if (request.Key.Trim().Length > 160 || request.Name.Trim().Length > 300 || request.DefinitionJson.Length > 1_000_000) throw new ArgumentException("Rule metadata exceeds the supported size limits.");
-        try { using var _ = JsonDocument.Parse(request.DefinitionJson); } catch (JsonException) { throw new ArgumentException("DefinitionJson must be valid JSON."); }
+        RulesRuntimeService.ValidateDefinition(request.DefinitionJson);
         rule.Key = request.Key.Trim(); rule.Name = request.Name.Trim(); rule.DefinitionJson = request.DefinitionJson; rule.Enabled = request.Enabled; rule.Version++; rule.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(token); await RecordAudit(tenantId, "rule.updated", rule.Id, token); return rule;
     }

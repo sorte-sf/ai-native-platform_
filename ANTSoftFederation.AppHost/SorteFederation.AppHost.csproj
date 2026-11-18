@@ -23,7 +23,7 @@
 		<PackageReference Include="Aspire.Hosting.Qdrant" Version="17.0.0" />
 		<PackageReference Include="Aspire.Hosting.NodeJs" Version="9.5.2" />
 		<PackageReference Include="Aspire.Hosting.Seq" Version="17.0.0" />
-		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.6.5" />
+		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="17.0.0-preview.1.26567.5" />
 
 		<PackageReference Include="Scalar.Aspire" Version="1.0.1" />
 		<PackageReference Include="VaultSharp" Version="1.17.5.1" />

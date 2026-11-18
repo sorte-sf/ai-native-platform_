@@ -30,6 +30,11 @@ public static class BlobApiExtensions
 
     private static bool CanAccessTenant(HttpContext context, Guid tenantId) =>
         context.User.IsInRole("SystemAdmin") ||
-        new[] { "tenant_id", "company_id", "companyId" }.Any(claimType =>
-            Guid.TryParse(context.User.FindFirst(claimType)?.Value, out var claimTenant) && claimTenant == tenantId);
+        new[] {
+            "tenant_id",
+            "tenantId",
+            "company_id",
+            "companyId"
+        }.Any(claimType => Guid.TryParse(context.User.FindFirst(claimType)?.Value, out var claimTenant) && claimTenant == tenantId);
+
 }

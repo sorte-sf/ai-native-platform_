@@ -23,13 +23,13 @@ public sealed class PlatformActionDispatcher(
                 break;
             case "notification.send":
             case "notification.create":
-                await notifications.Create(new SorteFederation.Builders.Contracts.CreateNotificationRequest(
+                await notifications.CreateFromPlatformEvent(new SorteFederation.Builders.Contracts.CreateNotificationRequest(
                     value.TenantId,
                     Required(root, "recipientId"),
                     Required(root, "title"),
                     Required(root, "message"),
                     Optional(root, "type"), Optional(root, "actionUrl")),
-                    Elevated(), token);
+                    value.Id, Elevated(), token);
                 break;
             case "notification.created":
                 // NotificationService already persisted the notification. This event is an audit/transport hook.

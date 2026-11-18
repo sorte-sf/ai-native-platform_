@@ -32,4 +32,4 @@ public enum GovernanceState { Draft = 1, Validated, PendingApproval, Approved, R
 
 public enum WorkflowInstanceStatus { Running, Completed, Cancelled, Failed }
 
-public enum PlatformEventStatus { Pending, Queued, Processed, Failed }
+public enum PlatformEventStatus { Pending, Queued, Processed, Failed, Processing }

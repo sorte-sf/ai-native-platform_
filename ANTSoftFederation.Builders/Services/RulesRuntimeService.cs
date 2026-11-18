@@ -6,6 +6,75 @@ namespace SorteFederation.Builders.Services;
 
 public sealed class RulesRuntimeService(AuditService audit, IHttpContextAccessor accessor)
 {
+    public static void ValidateDefinition(string rulesJson)
+    {
+        if (string.IsNullOrWhiteSpace(rulesJson) || rulesJson.Length > 1_000_000)
+            throw new ArgumentException("A rule definition is required and must be no larger than 1 MB.");
+        try
+        {
+            using var document = JsonDocument.Parse(rulesJson);
+            var root = document.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
+                throw new ArgumentException("A rule definition must be a JSON object.");
+            if (root.TryGetProperty("trigger", out var trigger) &&
+                (trigger.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(trigger.GetString()) || trigger.GetString()!.Length > 160))
+                throw new ArgumentException("Rule trigger must be a non-empty event name no longer than 160 characters.");
+            if (root.TryGetProperty("actions", out var actionDefinitions) &&
+                actionDefinitions.ValueKind == JsonValueKind.Array &&
+                actionDefinitions.EnumerateArray().Any(action => action.ValueKind == JsonValueKind.String && action.GetString()!.StartsWith("connector.", StringComparison.OrdinalIgnoreCase)))
+                throw new ArgumentException("Connector actions must be invoked through the authenticated connector execution endpoint.");
+            var budget = 0;
+            ValidateNode(root, "rule", 0, ref budget, isRoot: true);
+            if (root.TryGetProperty("actions", out var actions))
+            {
+                if (actions.ValueKind != JsonValueKind.Array || actions.GetArrayLength() > 20)
+                    throw new ArgumentException("Rule actions must be an array containing at most 20 actions.");
+                foreach (var action in actions.EnumerateArray())
+                    if (action.ValueKind != JsonValueKind.String || !IsApprovedAction(action.GetString()!))
+                        throw new ArgumentException("Rule actions must use an approved event, notification, workflow, or connector action type.");
+            }
+        }
+        catch (JsonException ex) { throw new ArgumentException("Rule definition must be valid JSON.", ex); }
+    }
+
+    private static void ValidateNode(JsonElement node, string path, int depth, ref int budget, bool isRoot = false)
+    {
+        if (depth > 16 || ++budget > 500)
+            throw new ArgumentException("Rule conditions exceed the supported nesting or size limit.");
+        if (node.ValueKind != JsonValueKind.Object)
+            throw new ArgumentException($"{path} must be an object.");
+        var allowedProperties = new HashSet<string>(StringComparer.Ordinal) { "all", "any", "field", "operator", "value" };
+        if (isRoot) { allowedProperties.Add("trigger"); allowedProperties.Add("actions"); }
+        if (node.EnumerateObject().Any(property => !allowedProperties.Contains(property.Name)))
+            throw new ArgumentException($"{path} contains an unsupported property.");
+        var hasAll = node.TryGetProperty("all", out var all);
+        var hasAny = node.TryGetProperty("any", out var any);
+        if (hasAll || hasAny)
+        {
+            if (hasAll && hasAny) throw new ArgumentException($"{path} cannot contain both all and any groups.");
+            var group = hasAll ? all : any;
+            if (group.ValueKind != JsonValueKind.Array || group.GetArrayLength() is < 1 or > 100)
+                throw new ArgumentException($"{path} condition group must contain 1–100 conditions.");
+            var index = 0;
+            foreach (var child in group.EnumerateArray()) ValidateNode(child, $"{path}.{(hasAll ? "all" : "any")}[{index++}]", depth + 1, ref budget);
+            return;
+        }
+        if (!node.TryGetProperty("field", out var field) || field.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(field.GetString()) || field.GetString()!.Length > 200 ||
+            !node.TryGetProperty("operator", out var op) || op.ValueKind != JsonValueKind.String)
+            throw new ArgumentException($"{path} requires a field and operator.");
+        var operatorName = op.GetString()!.ToLowerInvariant();
+        if (operatorName is not ("eq" or "neq" or "contains" or "startswith" or "endswith" or "gt" or "gte" or "lt" or "lte" or "isnull" or "isnotnull"))
+            throw new ArgumentException($"{path} uses unsupported operator '{operatorName}'.");
+        if (operatorName is not ("isnull" or "isnotnull") && (!node.TryGetProperty("value", out var value) || value.ValueKind is JsonValueKind.Undefined or JsonValueKind.Object or JsonValueKind.Array || value.ToString().Length > 4000))
+            throw new ArgumentException($"{path} requires a scalar value for operator '{operatorName}'.");
+    }
+
+    private static bool IsApprovedAction(string action) =>
+        action.Length <= 160 && (action.StartsWith("event.", StringComparison.OrdinalIgnoreCase) ||
+            action.StartsWith("notification.", StringComparison.OrdinalIgnoreCase) ||
+            action.StartsWith("workflow.", StringComparison.OrdinalIgnoreCase) ||
+            action.StartsWith("connector.", StringComparison.OrdinalIgnoreCase));
+
     public async Task<EvaluateRulesResponse> EvaluateAsync(EvaluateRulesRequest request, System.Security.Claims.ClaimsPrincipal user, CancellationToken token)
     {
         if (string.IsNullOrWhiteSpace(request.RulesJson) || string.IsNullOrWhiteSpace(request.DataJson))
@@ -14,6 +83,9 @@ public sealed class RulesRuntimeService(AuditService audit, IHttpContextAccessor
         {
             using var rules = JsonDocument.Parse(request.RulesJson);
             using var data = JsonDocument.Parse(request.DataJson);
+            ValidateDefinition(request.RulesJson);
+            if (data.RootElement.ValueKind != JsonValueKind.Object)
+                throw new ArgumentException("Rule data must be a JSON object.");
             var errors = new List<string>();
             var matched = Evaluate(rules.RootElement, data.RootElement, errors, "rule");
             var actions = matched && rules.RootElement.TryGetProperty("actions", out var actionNode) && actionNode.ValueKind == JsonValueKind.Array
@@ -34,9 +106,9 @@ public sealed class RulesRuntimeService(AuditService audit, IHttpContextAccessor
     {
         if (node.ValueKind != JsonValueKind.Object) { errors.Add($"{path} must be an object."); return false; }
         if (node.TryGetProperty("all", out var all))
-            return all.ValueKind == JsonValueKind.Array && all.EnumerateArray().Select((x, i) => Evaluate(x, data, errors, $"{path}.all[{i}]" )).All(x => x);
+            return all.EnumerateArray().Select((x, i) => Evaluate(x, data, errors, $"{path}.all[{i}]" )).All(x => x);
         if (node.TryGetProperty("any", out var any))
-            return any.ValueKind == JsonValueKind.Array && any.EnumerateArray().Select((x, i) => Evaluate(x, data, errors, $"{path}.any[{i}]" )).Any(x => x);
+            return any.EnumerateArray().Select((x, i) => Evaluate(x, data, errors, $"{path}.any[{i}]" )).Any(x => x);
         if (!node.TryGetProperty("field", out var field) || !node.TryGetProperty("operator", out var op) || field.ValueKind != JsonValueKind.String || op.ValueKind != JsonValueKind.String)
         { errors.Add($"{path} requires field and operator."); return false; }
         if (!data.TryGetProperty(field.GetString()!, out var actual)) return false;

@@ -8,6 +8,8 @@ namespace SorteFederation.Builders.Services;
 public sealed class WorkflowGraphInterpreter
 {
     public enum ParallelApprovalAction { AwaitingOthers, AdvanceApproved, AdvanceRejected }
+    public sealed record SimulationStep(string NodeId, string Title, string Type, string? Result = null);
+    public sealed record SimulationResult(string Status, IReadOnlyList<SimulationStep> Steps, string? AwaitingNodeId = null, string? Message = null);
     private readonly Dictionary<string, Node> _nodes;
     private readonly List<Edge> _edges;
 
@@ -123,6 +125,54 @@ public sealed class WorkflowGraphInterpreter
         var trigger = _nodes.Values.Single(x => x.Type == "trigger");
         var next = Next(trigger, "out");
         return AdvanceTasks(tenantId, next, recordJson);
+    }
+
+    /// <summary>Runs a side-effect-free preview of the graph using supplied sample data and simulated approval decisions.</summary>
+    public SimulationResult Simulate(string recordJson, IReadOnlyDictionary<string, string>? approvalOutcomes = null)
+    {
+        using var data = JsonDocument.Parse(recordJson);
+        if (data.RootElement.ValueKind != JsonValueKind.Object)
+            throw new ArgumentException("Simulation data must be a JSON object.");
+
+        var trace = new List<SimulationStep>();
+        Node? current = _nodes.Values.Single(x => x.Type == "trigger");
+        var visited = new HashSet<string>(StringComparer.Ordinal);
+        while (current is not null)
+        {
+            if (!visited.Add(current.Id) || visited.Count > _nodes.Count)
+                throw new InvalidOperationException("Workflow graph contains a cycle; simulation stopped.");
+            switch (current.Type)
+            {
+                case "trigger":
+                    trace.Add(new(current.Id, current.Title, current.Type, "started"));
+                    current = Next(current, "out");
+                    break;
+                case "condition":
+                    var matched = Evaluate(current, data.RootElement);
+                    var branch = matched ? "yes" : "no";
+                    trace.Add(new(current.Id, current.Title, current.Type, branch));
+                    current = Next(current, branch);
+                    break;
+                case "approval":
+                    if (approvalOutcomes is null || !approvalOutcomes.TryGetValue(current.Id, out var outcome))
+                    {
+                        trace.Add(new(current.Id, current.Title, current.Type, "awaiting-decision"));
+                        return new("waiting", trace, current.Id, "Supply an approval outcome to simulate the next branch.");
+                    }
+                    outcome = outcome.Trim().ToLowerInvariant();
+                    if (outcome is not ("approved" or "rejected"))
+                        throw new ArgumentException($"Approval outcome for '{current.Title}' must be approved or rejected.");
+                    trace.Add(new(current.Id, current.Title, current.Type, outcome));
+                    current = Next(current, outcome);
+                    break;
+                case "end":
+                    trace.Add(new(current.Id, current.Title, current.Type, "completed"));
+                    return new("completed", trace);
+                default:
+                    throw new InvalidOperationException($"Node type '{current.Type}' cannot be simulated.");
+            }
+        }
+        throw new InvalidOperationException("Workflow path ended without reaching an approval or end node.");
     }
 
     public BuilderWorkflowTask? Continue(Guid tenantId, string nodeId, string outcome, string recordJson)

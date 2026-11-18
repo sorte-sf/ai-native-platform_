@@ -4,7 +4,24 @@ namespace SorteFederation.Builders.Services;
 public sealed class NotificationService(BuilderDbContext db)
 {
     public async Task<BuilderNotification> Create(CreateNotificationRequest request, System.Security.Claims.ClaimsPrincipal user, CancellationToken token)
+        => await CreateCore(request, user, null, token);
+
+    public async Task<BuilderNotification> CreateFromPlatformEvent(CreateNotificationRequest request,
+        Guid platformEventId, System.Security.Claims.ClaimsPrincipal user, CancellationToken token)
     {
+        if (platformEventId == Guid.Empty) throw new ArgumentException("Platform event id is required.");
+        return await CreateCore(request, user, platformEventId, token);
+    }
+
+    private async Task<BuilderNotification> CreateCore(CreateNotificationRequest request,
+        System.Security.Claims.ClaimsPrincipal user, Guid? notificationId, CancellationToken token)
+    {
+        if (notificationId is not null)
+        {
+            var existing = await db.Notifications.SingleOrDefaultAsync(
+                x => x.Id == notificationId && x.TenantId == request.TenantId, token);
+            if (existing is not null) return existing;
+        }
         if (string.IsNullOrWhiteSpace(request.RecipientId) || string.IsNullOrWhiteSpace(request.Title) || string.IsNullOrWhiteSpace(request.Message))
             throw new ArgumentException("RecipientId, title, and message are required.");
         var recipient = request.RecipientId.Trim();
@@ -25,7 +42,7 @@ public sealed class NotificationService(BuilderDbContext db)
                                           string.IsNullOrWhiteSpace(parsed.Host))))
                 throw new ArgumentException("ActionUrl must be a relative application path or an HTTPS URL.");
         }
-        var notification = new BuilderNotification { TenantId = request.TenantId, RecipientId = recipient, Title = title, Message = message, Type = type, ActionUrl = actionUrl };
+        var notification = new BuilderNotification { Id = notificationId ?? Guid.CreateVersion7(), TenantId = request.TenantId, RecipientId = recipient, Title = title, Message = message, Type = type, ActionUrl = actionUrl };
         db.Notifications.Add(notification);
         db.PlatformEvents.Add(new BuilderPlatformEvent
         {

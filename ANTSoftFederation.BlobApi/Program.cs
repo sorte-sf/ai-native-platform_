@@ -1,6 +1,5 @@
 
-global using SorteFederation.Logger;
-using Microsoft.EntityFrameworkCore;
+global using SorteFederation.Logger; 
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -73,7 +72,7 @@ app.UseAuthorization();
 
 app.MapDefaultEndpoints();
 
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 
 app.MapLogLevelHandler();
 
