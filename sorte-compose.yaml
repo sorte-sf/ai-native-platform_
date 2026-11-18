@@ -1,0 +1,376 @@
+name: sorte-platform
+
+x-api-defaults: &api-defaults
+  pull_policy: always
+  restart: unless-stopped
+  environment: &api-environment
+    ASPNETCORE_ENVIRONMENT: Production
+    ASPNETCORE_URLS: http://+:8080
+    Kestrel__Endpoints__Http__Url: http://+:8080
+    Auth__Jwt__Issuer: sorte.portal
+    Auth__Jwt__Audience: sorte
+    Auth__Jwt__Key: ${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in .env}
+    JwtSettings__Issuer: sorte.portal
+    JwtSettings__Audience: sorte
+    JwtSettings__SecretKey: ${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in .env}
+    RabbitMQ__Enabled: "true"
+    RabbitMQ__Host: rabbitmq
+    RabbitMQ__Port: "5672"
+    RabbitMQ__Username: ${RABBITMQ_USER:?Set RABBITMQ_USER in .env}
+    RabbitMQ__Password: ${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
+    RabbitMQ__VirtualHost: /
+    ConnectionStrings__messaging: amqp://${RABBITMQ_USER:?Set RABBITMQ_USER in .env}:${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}@rabbitmq:5672/
+    ConnectionStrings__cache: cache:6379
+  networks:
+    - sorte
+
+services:
+
+  portainer:
+    image: portainer/portainer-ce:lts
+    restart: unless-stopped
+    ports:
+      - "${PORTAINER_HTTP_PORT:-9000}:9000"
+      - "${PORTAINER_HTTPS_PORT:-9443}:9443"
+    volumes:
+      - portainer-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks: [sorte]
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:?Set PGADMIN_DEFAULT_EMAIL in .env}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?Set PGADMIN_DEFAULT_PASSWORD in .env}
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      postgres-portal: { condition: service_healthy }
+      postgres-builder: { condition: service_healthy }
+      postgres-blob: { condition: service_healthy }
+    networks: [sorte]
+
+  cache:
+    image: redis:8.6
+    restart: unless-stopped
+    command: [redis-server, --appendonly, "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [sorte]
+
+  redis-insight:
+    image: redis/redisinsight:3.4
+    restart: unless-stopped
+    ports:
+      - "${REDIS_INSIGHT_PORT:-5540}:5540"
+    depends_on:
+      cache: { condition: service_healthy }
+    networks: [sorte]
+
+  redis-commander:
+    image: joeferner/redis-commander:latest
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: cache:cache:6379
+    ports:
+      - "${REDIS_COMMANDER_PORT:-8081}:8081"
+    depends_on:
+      cache: { condition: service_healthy }
+    networks: [sorte]
+
+  rabbitmq:
+    image: rabbitmq:4.3-management
+    hostname: rabbitmq
+    restart: unless-stopped
+    environment:
+      TZ: Europe/Istanbul
+      RABBITMQ_DEFAULT_VHOST: /
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?Set RABBITMQ_USER in .env}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks: [sorte]
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: [CMD, ollama, list]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+    networks: [sorte]
+
+  ollama-models:
+    image: ollama/ollama:latest
+    restart: "no"
+    entrypoint: [/bin/sh, -c]
+    command: >-
+      until OLLAMA_HOST=http://ollama:11434 ollama list >/dev/null 2>&1; do sleep 3; done;
+      OLLAMA_HOST=http://ollama:11434 ollama pull qwen3:8b;
+      OLLAMA_HOST=http://ollama:11434 ollama pull qwen3-embedding:0.6b
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks: [sorte]
+
+  postgres-portal:
+    image: pgvector/pgvector:pg18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: SortePlatformDb2027
+    volumes:
+      - portal-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [sorte]
+
+  postgres-builder:
+    image: pgvector/pgvector:pg18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: SortePlatformBuilderDb2027
+    volumes:
+      - builder-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [sorte]
+
+  postgres-blob:
+    image: pgvector/pgvector:pg18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: SortePlatformBlobDb2027
+    volumes:
+      - blob-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [sorte]
+
+  portal-api:
+    image: ghcr.io/sorte-sf/sortefederation-portal:${IMAGE_TAG:-latest}
+    <<: *api-defaults
+    environment:
+      <<: *api-environment
+      ConnectionStrings__SortePlatformDb2027: "Host=postgres-portal;Port=5432;Database=SortePlatformDb2027;Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+      POSTGRES_HOST: postgres-portal
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DATABASE: SortePlatformDb2027
+    depends_on:
+      postgres-portal: { condition: service_healthy }
+      cache: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      realtime-api: { condition: service_started }
+    networks:
+      sorte:
+        aliases: [sorte-portal-service]
+
+  builders-api:
+    image: ghcr.io/sorte-sf/antsoft-builders:${IMAGE_TAG:-latest}
+    <<: *api-defaults
+    environment:
+      <<: *api-environment
+      ConnectionStrings__SortePlatformBuilderDb2027: "Host=postgres-builder;Port=5432;Database=SortePlatformBuilderDb2027;Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+      POSTGRES_HOST: postgres-builder
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DATABASE: SortePlatformBuilderDb2027
+      BlobApi__BaseUrl: http://blob-api:8080
+      AI__Local__Model: qwen3:8b
+      services__ollama-chat__http__0: http://ollama:11434
+      services__ollama-embeddings__http__0: http://ollama:11434
+    depends_on:
+      postgres-builder: { condition: service_healthy }
+      cache: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      ollama-models: { condition: service_completed_successfully }
+      realtime-api: { condition: service_started }
+      blob-api: { condition: service_started }
+    networks:
+      sorte:
+        aliases: [sorte-portal-builder]
+
+  blob-api:
+    image: ghcr.io/sorte-sf/sortefederation-blobapi:${IMAGE_TAG:-latest}
+    <<: *api-defaults
+    environment:
+      <<: *api-environment
+      DbType: postgresql
+      ConnectionStrings__SortePlatformBlobDb2027: "Host=postgres-blob;Port=5432;Database=SortePlatformBlobDb2027;Username=${POSTGRES_USER:?Set POSTGRES_USER in .env};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+      POSTGRES_HOST: postgres-blob
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DATABASE: SortePlatformBlobDb2027
+    depends_on:
+      postgres-blob: { condition: service_healthy }
+      cache: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    networks:
+      sorte:
+        aliases: [sorte-blob-builder, sorte-blob-service, antsoft-blob-service]
+
+  designer-studio-api:
+    image: ghcr.io/sorte-sf/sortefederation-designerstudio:${IMAGE_TAG:-latest}
+    <<: *api-defaults
+    environment:
+      <<: *api-environment
+      ConnectionStrings__messaging: amqp://${RABBITMQ_USER:?Set RABBITMQ_USER in .env}:${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}@rabbitmq:5672/
+      DESIGNER_TEMPLATE_PACKAGES_PATH: /app/Contents/Data
+    volumes:
+      - designer-studio-data:/app/Contents/Data
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+      realtime-api: { condition: service_started }
+    networks:
+      sorte:
+        aliases: [sorte-designer-studio-service]
+
+  payment-api:
+    image: ghcr.io/sorte-sf/sortefederation-paymentgateway:${IMAGE_TAG:-latest}
+    <<: *api-defaults
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+    networks:
+      sorte:
+        aliases: [sorte-payment-service]
+
+  realtime-api:
+    image: ghcr.io/sorte-sf/sortefederation-realtime:${IMAGE_TAG:-latest}
+    <<: *api-defaults
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+    networks:
+      sorte:
+        aliases: [sorte-realtime-service]
+
+  gateway:
+    image: ghcr.io/sorte-sf/sortefederation-loadbalancing:${IMAGE_TAG:-latest}
+    <<: *api-defaults
+    environment:
+      <<: *api-environment
+      ReverseProxy__Clusters__portalservice__Destinations__portalservice__Address: http://portal-api:8080/
+      ReverseProxy__Clusters__builderservice__Destinations__builderservice__Address: http://builders-api:8080/
+      ReverseProxy__Clusters__paymentservice__Destinations__paymentservice__Address: http://payment-api:8080/
+      ReverseProxy__Clusters__blobservice__Destinations__blobservice__Address: http://blob-api:8080/
+      ReverseProxy__Clusters__designerstudioservice__Destinations__designerstudioservice__Address: http://designer-studio-api:8080/
+      ReverseProxy__Clusters__realtimeservice__Destinations__realtimeservice__Address: http://realtime-api:8080/
+    ports:
+      - "${GATEWAY_PORT:-11000}:8080"
+    depends_on:
+      portal-api: { condition: service_started }
+      builders-api: { condition: service_started }
+      payment-api: { condition: service_started }
+      blob-api: { condition: service_started }
+      designer-studio-api: { condition: service_started }
+      realtime-api: { condition: service_started }
+
+  website:
+    image: ghcr.io/sorte-sf/sortefederation-website:${IMAGE_TAG:-latest}
+    <<: *api-defaults
+    environment:
+      <<: *api-environment
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      WEB_DATA_PATH: /data
+    volumes:
+      - website-data:/data
+    ports:
+      - "${WEBSITE_PORT:-9009}:8080"
+    depends_on:
+      cache: { condition: service_healthy }
+
+  portal-web:
+    image: ghcr.io/sorte-sf/sortefederation-portalweb:${IMAGE_TAG:-latest}
+    <<: *api-defaults
+    environment:
+      <<: *api-environment
+      WEB_DATA_PATH: /data
+    volumes:
+      - portal-web-data:/data
+    ports:
+      - "${PORTAL_WEB_PORT:-9008}:8080"
+    depends_on:
+      cache: { condition: service_healthy }
+
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    environment:
+      N8N_HOST: 0.0.0.0
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      N8N_METRICS: "true"
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?Set N8N_ENCRYPTION_KEY in .env}
+      N8N_INSTANCE_OWNER_MANAGED_BY_ENV: "true"
+      N8N_INSTANCE_OWNER_EMAIL: ${N8N_OWNER_EMAIL:?Set N8N_OWNER_EMAIL in .env}
+      N8N_INSTANCE_OWNER_PASSWORD_HASH: ${N8N_OWNER_PASSWORD_HASH:?Set N8N_OWNER_PASSWORD_HASH in .env}
+    ports:
+       - "${N8N_PORT:-5678}:5678"
+    volumes:
+       - n8n-data:/home/node/.n8n
+    networks: [sorte]
+
+networks:
+  sorte:
+    name: sorte
+    driver: bridge
+
+volumes:
+  portal-postgres-data:
+  builder-postgres-data:
+  blob-postgres-data:
+  redis-data:
+  rabbitmq-data:
+  ollama-data:
+  designer-studio-data:
+  website-data:
+  portal-web-data:
+  n8n-data:
+  portainer-data:
+  pgadmin-data:

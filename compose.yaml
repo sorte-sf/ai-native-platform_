@@ -76,7 +76,7 @@ services:
     networks: [sorte]
 
   redis-commander:
-    image: joeferner/redis-commander:latest
+    image: rediscommander/redis-commander:latest
     restart: unless-stopped
     environment:
       REDIS_HOSTS: cache:cache:6379
@@ -337,24 +337,24 @@ services:
     depends_on:
       cache: { condition: service_healthy }
 
-  # n8n:
-  #   image: n8nio/n8n:latest
-  #   restart: unless-stopped
-  #   environment:
-  #     N8N_HOST: 0.0.0.0
-  #     N8N_PORT: "5678"
-  #     N8N_PROTOCOL: http
-  #     WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
-  #     N8N_METRICS: "true"
-  #     N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?Set N8N_ENCRYPTION_KEY in .env}
-  #     N8N_INSTANCE_OWNER_MANAGED_BY_ENV: "true"
-  #     N8N_INSTANCE_OWNER_EMAIL: ${N8N_OWNER_EMAIL:?Set N8N_OWNER_EMAIL in .env}
-  #     N8N_INSTANCE_OWNER_PASSWORD_HASH: ${N8N_OWNER_PASSWORD_HASH:?Set N8N_OWNER_PASSWORD_HASH in .env}
-  #   ports:
-  #     - "${N8N_PORT:-5678}:5678"
-  #   volumes:
-  #     - n8n-data:/home/node/.n8n
-  #   networks: [sorte]
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    environment:
+      N8N_HOST: 0.0.0.0
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      N8N_METRICS: "true"
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?Set N8N_ENCRYPTION_KEY in .env}
+      N8N_INSTANCE_OWNER_MANAGED_BY_ENV: "true"
+      N8N_INSTANCE_OWNER_EMAIL: ${N8N_OWNER_EMAIL:?Set N8N_OWNER_EMAIL in .env}
+      N8N_INSTANCE_OWNER_PASSWORD_HASH: ${N8N_OWNER_PASSWORD_HASH:?Set N8N_OWNER_PASSWORD_HASH in .env}
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    volumes:
+      - n8n-data:/home/node/.n8n
+    networks: [sorte]
 
 networks:
   sorte:
@@ -371,6 +371,6 @@ volumes:
   designer-studio-data:
   website-data:
   portal-web-data:
-  # n8n-data:
+  n8n-data:
   portainer-data:
   pgadmin-data:

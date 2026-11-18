@@ -1,0 +1,171 @@
+name: sorte-platform
+
+x-api-defaults: &api-defaults
+  pull_policy: always
+  restart: unless-stopped
+  environment: &api-environment
+    ASPNETCORE_ENVIRONMENT: Production
+    ASPNETCORE_URLS: http://+:8080
+    Kestrel__Endpoints__Http__Url: http://+:8080
+    Auth__Jwt__Issuer: sorte.portal
+    Auth__Jwt__Audience: sorte
+    Auth__Jwt__Key: ${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in .env}
+    JwtSettings__Issuer: sorte.portal
+    JwtSettings__Audience: sorte
+    JwtSettings__SecretKey: ${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in .env}
+    RabbitMQ__Enabled: "true"
+    RabbitMQ__Host: rabbitmq
+    RabbitMQ__Port: "5672"
+    RabbitMQ__Username: ${RABBITMQ_USER:?Set RABBITMQ_USER in .env}
+    RabbitMQ__Password: ${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
+    RabbitMQ__VirtualHost: /
+    ConnectionStrings__messaging: amqp://${RABBITMQ_USER:?Set RABBITMQ_USER in .env}:${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}@rabbitmq:5672/
+    ConnectionStrings__cache: cache:6379
+  networks:
+    - sorte
+
+services:
+
+  portainer:
+    image: portainer/portainer-ce:lts
+    restart: unless-stopped
+    ports:
+      - "${PORTAINER_HTTP_PORT:-9000}:9000"
+      - "${PORTAINER_HTTPS_PORT:-9443}:9443"
+    volumes:
+      - portainer-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks: [sorte]
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:?Set PGADMIN_DEFAULT_EMAIL in .env}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?Set PGADMIN_DEFAULT_PASSWORD in .env}
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      postgres-portal: { condition: service_healthy }
+      postgres-builder: { condition: service_healthy }
+      postgres-blob: { condition: service_healthy }
+    networks: [sorte]
+
+  cache:
+    image: redis:8.6
+    restart: unless-stopped
+    command: [redis-server, --appendonly, "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [sorte]
+
+  redis-insight:
+    image: redis/redisinsight:3.4
+    restart: unless-stopped
+    ports:
+      - "${REDIS_INSIGHT_PORT:-5540}:5540"
+    depends_on:
+      cache: { condition: service_healthy }
+    networks: [sorte]
+
+  redis-commander:
+    image: joeferner/redis-commander:latest
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: cache:cache:6379
+    ports:
+      - "${REDIS_COMMANDER_PORT:-8081}:8081"
+    depends_on:
+      cache: { condition: service_healthy }
+    networks: [sorte]
+
+  rabbitmq:
+    image: rabbitmq:4.3-management
+    hostname: rabbitmq
+    restart: unless-stopped
+    environment:
+      TZ: Europe/Istanbul
+      RABBITMQ_DEFAULT_VHOST: /
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?Set RABBITMQ_USER in .env}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks: [sorte]
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: [CMD, ollama, list]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+    networks: [sorte]
+
+  ollama-models:
+    image: ollama/ollama:latest
+    restart: "no"
+    entrypoint: [/bin/sh, -c]
+    command: >-
+      until OLLAMA_HOST=http://ollama:11434 ollama list >/dev/null 2>&1; do sleep 3; done;
+      OLLAMA_HOST=http://ollama:11434 ollama pull qwen3:8b;
+      OLLAMA_HOST=http://ollama:11434 ollama pull qwen3-embedding:0.6b
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks: [sorte]
+ 
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    environment:
+      N8N_HOST: 0.0.0.0
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      N8N_METRICS: "true"
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?Set N8N_ENCRYPTION_KEY in .env}
+      N8N_INSTANCE_OWNER_MANAGED_BY_ENV: "true"
+      N8N_INSTANCE_OWNER_EMAIL: ${N8N_OWNER_EMAIL:?Set N8N_OWNER_EMAIL in .env}
+      N8N_INSTANCE_OWNER_PASSWORD_HASH: ${N8N_OWNER_PASSWORD_HASH:?Set N8N_OWNER_PASSWORD_HASH in .env}
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    volumes:
+      - n8n-data:/home/node/.n8n
+    networks: [sorte]
+
+networks:
+  sorte:
+    name: sorte
+    driver: bridge
+
+volumes:
+  redis-data:
+  rabbitmq-data:
+  ollama-data:
+  n8n-data:
+  portainer-data:
+  pgadmin-data:
