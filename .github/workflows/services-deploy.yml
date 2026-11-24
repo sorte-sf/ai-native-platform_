@@ -46,9 +46,9 @@ jobs:
             assembly: SorteFederation.Realtime.dll
             image: sortefederation-realtime
           # AppHost deploys this additional project as "sorte-web-site".
-          - project: ANTSoftFederation.WebSite/SorteFederation.WebSite.csproj
-            assembly: SorteFederation.WebSite.dll
-            image: sortefederation-website
+          #- project: ANTSoftFederation.WebSite/SorteFederation.WebSite.csproj
+          #  assembly: SorteFederation.WebSite.dll
+          #  image: sortefederation-website
 
     steps:
       - uses: actions/checkout@v4

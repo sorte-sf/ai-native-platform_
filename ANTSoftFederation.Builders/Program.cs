@@ -2,6 +2,9 @@
 using SorteFederation.Builders;
 
 var builder = WebApplication.CreateBuilder(args);
+var gatewayPublicUrl = builder.Configuration["Gateway:PublicUrl"];
+if (string.IsNullOrWhiteSpace(gatewayPublicUrl) && builder.Environment.IsDevelopment())
+    gatewayPublicUrl = "http://localhost:11000";
 
 builder.AddServiceDefaults();
 
@@ -154,6 +157,23 @@ app.UseExceptionHandler(errorApp => errorApp.Run(async context =>
 app.UseHttpsRedirection();
 
 app.UseRouting();
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.Value?.Equals("/config/gateway.json", StringComparison.OrdinalIgnoreCase) == true &&
+        !string.IsNullOrWhiteSpace(gatewayPublicUrl))
+    {
+        context.Response.Headers.CacheControl = "no-store";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            gatewayApiBaseUrl = gatewayPublicUrl,
+            designerStudioUrl = "/designer-studio-app/",
+            blobUrl = "/designer-studio-app/"
+        }, cancellationToken: context.RequestAborted);
+        return;
+    }
+
+    await next();
+});
 app.UseStaticFiles();
 app.UseCors("SortePolicy");
 
