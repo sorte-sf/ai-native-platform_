@@ -45,8 +45,6 @@ public static class ApplicationServiceRegistrations
             dashboard.WithHostPort(GetPort(builder.Configuration, "ASPIRE_DASHBOARD_PORT", 8080)).WithForwardedHeaders(enabled: true);
         });
 
-        //var registry = builder.AddContainerRegistry("dockerhub", "docker.io");
-
         var externalApiSettings = builder.Configuration.GetSection("ExternalAPiSettings").Get<ExternalServiceUrl>();
 
         IResourceBuilder<ExternalServiceResource>? figmaExternalService = null;
@@ -66,7 +64,7 @@ public static class ApplicationServiceRegistrations
             }
         }
 
-        IResourceBuilder<RedisResource> cache = builder.AddRedis("cache").WithIconName("memory").WithRedisInsight(delegate (IResourceBuilder<RedisInsightResource> a)
+        var cache = builder.AddRedis("cache").WithIconName("memory").WithRedisInsight(delegate (IResourceBuilder<RedisInsightResource> a)
         {
             a.WithContainerName("redis-insight");
         })

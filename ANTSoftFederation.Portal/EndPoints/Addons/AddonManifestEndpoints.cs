@@ -1,4 +1,3 @@
-using SorteFederation.Portal.Security;
 
 namespace SorteFederation.Portal.EndPoints.Addons;
 
