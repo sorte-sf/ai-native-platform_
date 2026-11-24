@@ -1,5 +1,4 @@
-
-namespace SorteFederation.LoadBalancing.Bootstraping;
+namespace SorteFederation.LoadBalancing;
 
 public static class ApplicationServiceExtensions
 {

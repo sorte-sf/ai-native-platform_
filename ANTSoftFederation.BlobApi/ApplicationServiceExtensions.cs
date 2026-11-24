@@ -1,5 +1,4 @@
-﻿
-namespace SorteFederation.BlobApi.Bootstraping;
+﻿namespace SorteFederation.BlobApi;
 
 public static class ApplicationServiceExtensions
 {

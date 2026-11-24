@@ -23,7 +23,9 @@ public static class Endpoints
         {
             var cfg = await store.GetAsync(Tenant(ctx), ct);
             return cfg.Providers.Where(p => p.Value.Enabled).Select(p => p.Key.ToString());
-        });
+        })
+        .WithDescription("sorte-payment-gateway")
+        .WithTags("get-payments");
 
         g.MapPost("/", async (CreatePaymentDto dto, HttpContext ctx, IPaymentService svc, CancellationToken ct) =>
         {
@@ -46,19 +48,33 @@ public static class Endpoints
             foreach (var i in dto.Items ?? []) b.AddItem(i.Name, i.Qty, i.UnitPrice);
 
             return Results.Ok(await svc.CreateAsync(b.Build(), ct));
-        });
+        })
+        .WithDescription("sorte-payment-gateway")
+        .WithTags("post-payment");
 
         g.MapGet("/{id:guid}", async (Guid id, HttpContext ctx, IPaymentService svc, CancellationToken ct) =>
         {
             var p = await svc.GetAsync(id, Tenant(ctx), ct);
             return Results.Ok(new { paymentId = p.Id, status = p.Status, provider = p.Provider, amount = p.Amount, refundedTotal = p.RefundedTotal });
-        });
+        })
+        .WithDescription("sorte-payment-gateway")
+        .WithTags("get-payment-byid");
+
 
         g.MapPost("/{id:guid}/confirm", async (Guid id, Dictionary<string, string>? data, HttpContext ctx, IPaymentService svc, CancellationToken ct) =>
-            Results.Ok(await svc.ConfirmAsync(id, Tenant(ctx), data ?? [], ct)));
+            Results.Ok(await svc.ConfirmAsync(id, Tenant(ctx), data ?? [], ct))
+         )
+        .WithDescription("sorte-payment-gateway")
+        .WithTags("confirm-payment-byid");
+
 
         g.MapPost("/{id:guid}/refunds", async (Guid id, RefundDto dto, HttpContext ctx, IPaymentService svc, CancellationToken ct) =>
-            Results.Ok(await svc.RefundAsync(id, Tenant(ctx), dto.Amount, IdemKey(ctx), ct)));
+            Results.Ok(await svc.RefundAsync(id, Tenant(ctx), dto.Amount, IdemKey(ctx), ct))
+         )
+        .WithDescription("sorte-payment-gateway")
+        .WithTags("payment-refunds");
+
+
     }
 
     public static void MapWebhookEndpoints(this WebApplication app) =>
@@ -72,7 +88,9 @@ public static class Endpoints
 
             await svc.HandleWebhookAsync(type, tenantKey, new WebhookContext(payload, headers), ct);
             return Results.Ok(); 
-        });
+        })
+       .WithDescription("sorte-payment-gateway")
+       .WithTags("webhooks");
 
 }
 

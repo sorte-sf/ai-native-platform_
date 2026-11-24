@@ -1,5 +1,4 @@
-﻿
-namespace SorteFederation.ANTApplications.Bootstraping;
+﻿namespace SorteFederation.Portal;
 
 public static class ApplicationServiceExtensions
 {

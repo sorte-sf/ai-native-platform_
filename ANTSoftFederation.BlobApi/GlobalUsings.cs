@@ -29,7 +29,6 @@ global using Microsoft.IdentityModel.Tokens;
 global using System.Security.Claims;
 global using System.Text;
  
-global using SorteFederation.BlobApi.Bootstraping;
 global using SorteFederation.BlobApi.DataDbContext.Entities.Base;
 global using SorteFederation.BlobApi.DataDbContext;
 global using SorteFederation.BlobApi.DataDbContext.Entities;

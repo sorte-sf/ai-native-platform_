@@ -22,7 +22,6 @@ global using Microsoft.IdentityModel.Tokens;
 global using Npgsql;
 global using System.Text;
 
-global using SorteFederation.ANTApplications.Bootstraping;
 global using SorteFederation.Logger; 
 global using SorteFederation.Portal.EndPoints.Auths;
 global using SorteFederation.Portal.EndPoints.Addons;
@@ -35,7 +34,7 @@ global using SorteFederation.Shared;
 global using SorteFederation.GlobalEnums;
 global using SorteFederation.ANTApplications.Services.Custom;
 global using SorteFederation.EncryptEFCoreColumn;
-global using SorteFederation.Shared;
+
 global using SorteFederation.ANTApplications.DataDbContext;
 global using SorteFederation.ANTApplications.DTOs.Base;
 global using SorteFederation.Models;

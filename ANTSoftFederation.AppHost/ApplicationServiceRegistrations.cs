@@ -1,5 +1,4 @@
-﻿
-namespace SorteFederation.AppHost.Bootstraping;
+﻿namespace SorteFederation.AppHost;
 
 public static class ApplicationServiceRegistrations
 {
@@ -77,7 +76,7 @@ public static class ApplicationServiceRegistrations
        })
        .WithLifetime(ContainerLifetime.Persistent);
 
-        IResourceBuilder<RabbitMQServerResource> messaging = RabbitMQBuilderExtensions
+        var messaging = RabbitMQBuilderExtensions
             .AddRabbitMQ(port: GetPort(builder.Configuration, "RabbitMQ:Port", 5672), builder: builder, name: "messaging", userName: rabbitUser, password: rabbitPwd)
             .WithManagementPlugin(15672)
             .WithContainerName("sorte-rabbitmq")
@@ -87,26 +86,8 @@ public static class ApplicationServiceRegistrations
             .WithEnvironment("RABBITMQ_DEFAULT_PASSWORD", rabbitPwd)
             .WithDataVolume("sorte-rabbitmq_vol")
             .WithLifetime(ContainerLifetime.Persistent);
-         
-        //var ownerEmail = builder.AddParameter("n8n-owner-email");
-        //var ownerPasswordHash = builder.AddParameter("n8n-owner-password-hash", secret: true);
-        //var n8nEncryptionKey = builder.AddParameter("n8n-encryption-key", secret: true);
-
-        //var n8n = builder.AddContainer("n8n", "n8nio/n8n", "latest")
-        //                 .WithHttpEndpoint(port: 5678, targetPort: 5678, name: "n8n-ui")
-        //                 .WithBindMount("./n8n-data", "/home/node/.n8n")
-        //                 .WithEnvironment("N8N_HOST", "0.0.0.0")
-        //                 .WithEnvironment("N8N_PORT", "5678")
-        //                 .WithEnvironment("WEBHOOK_URL", "http://localhost:5678/")
-        //                 .WithEnvironment("N8N_METRICS", "true")
-        //                 .WithEnvironment("N8N_ENCRYPTION_KEY", n8nEncryptionKey)
-        //                 .WithEnvironment("N8N_INSTANCE_OWNER_MANAGED_BY_ENV", "true")
-        //                 .WithEnvironment("N8N_INSTANCE_OWNER_EMAIL", ownerEmail)
-        //                 .WithEnvironment("N8N_INSTANCE_OWNER_PASSWORD_HASH", ownerPasswordHash)
-        //                 .WithLifetime(ContainerLifetime.Persistent)
-        //                 ;
-
-        IResourceBuilder<ProjectResource> realtimeService = builder.AddProject<SorteFederation_Realtime>("sorte-realtime-service")
+          
+        var realtimeService = builder.AddDotnetProject("sorte-realtime-service", "../ANTSoftFederation.Realtime/SorteFederation.Realtime.csproj")
             .WithHttpHealthCheck("/health", endpointName: "http")
             .WithEndpoint("http", delegate (EndpointAnnotation endpoint)
         {
@@ -124,12 +105,17 @@ public static class ApplicationServiceRegistrations
         .WithOtlpExporter()
         ;
 
-        IResourceBuilder<ProjectResource> paymentService = builder.AddProject<SorteFederation_PaymentGateway>("sorte-payment-service")
+        var paymentService = builder.AddDotnetProject("sorte-payment-service", "../ANTSoftFederation.PaymentGateway/SorteFederation.PaymentGateway.csproj")
           .WithHttpHealthCheck("/health", endpointName: "http")
           .WithEndpoint("http", delegate (EndpointAnnotation endpoint)
           {
               endpoint.IsProxied = false;
-          }).WithEnvironment(delegate (EnvironmentCallbackContext context)
+          })
+          .WithUrlForEndpoint("http", (e) =>
+          {
+               return new() { Url = "/scalar", DisplayText = "Payment gateway API Docs." };
+          })
+         .WithEnvironment(delegate (EnvironmentCallbackContext context)
           {
               context.EnvironmentVariables["Auth__Jwt__Issuer"] = "sorte.portal";
               context.EnvironmentVariables["Auth__Jwt__Audience"] = "sorte";
@@ -153,7 +139,7 @@ public static class ApplicationServiceRegistrations
                                .WithLifetime(ContainerLifetime.Persistent)
                                ;
 
-        IResourceBuilder<OllamaResource> chatModel = builder.AddOllama("sorte-platform-ollama", 11434)
+        var chatModel = builder.AddOllama("sorte-platform-ollama", 11434)
              .WithLifetime(ContainerLifetime.Persistent).WithDataVolume()
              .WithOtlpExporter();
 
@@ -167,7 +153,9 @@ public static class ApplicationServiceRegistrations
 
         var portalDb = portalPostgres.AddDatabase("SortePlatformDb2027");
 
-        IResourceBuilder<ProjectResource> portalService = builder.AddProject<SorteFederation_Portal>("sorte-portal-service").WithHttpHealthCheck("/health", endpointName: "http").WithEndpoint("http", delegate (EndpointAnnotation endpoint)
+        var portalService = builder.AddDotnetProject("sorte-portal-service", "../ANTSoftFederation.Portal/SorteFederation.Portal.csproj")
+            .WithHttpHealthCheck("/health", endpointName: "http")
+            .WithEndpoint("http", delegate (EndpointAnnotation endpoint)
         {
             endpoint.IsProxied = false;
         }).WithExternalHttpEndpoints()
@@ -209,22 +197,21 @@ public static class ApplicationServiceRegistrations
 
         var platformBuilderDb = platformBuilderPostgres.AddDatabase("SortePlatformBuilderDb2027");
 
-        IResourceBuilder<ProjectResource> platformBuilderService = builder.AddProject<Projects.SorteFederation_Builders>("sorte-portal-builder")
+        var platformBuilderService = builder.AddDotnetProject("sorte-portal-builder", "../ANTSoftFederation.Builders/SorteFederation.Builders.csproj")
             .WithHttpHealthCheck("/health", endpointName: "http")
             .WithEndpoint("http", delegate (EndpointAnnotation endpoint)
         {
             endpoint.IsProxied = false;
         }).WithExternalHttpEndpoints()
+            .WithUrlForEndpoint("http", url =>
+            {
+                url.Url = "/hangfire";
+                url.DisplayText = "Sorte Hangfire Dashboard.";
+            })
             .WithUrlForEndpoint("http", (EndpointReference e) => new ResourceUrlAnnotation
             {
                 Url = "/scalar",
                 DisplayText = "Sorte Builder API Docs."
-            })
-            .WithUrlForEndpoint("http", (EndpointReference e) => new ResourceUrlAnnotation
-            {
-                Url = "/hangfire",
-
-                DisplayText = "Sorte Hangfire Docs."
             })
 
             .WithEnvironment(delegate (EnvironmentCallbackContext context)
@@ -265,7 +252,7 @@ public static class ApplicationServiceRegistrations
 
         var blobDb = platformBlobPostgres.AddDatabase("SortePlatformBlobDb2027");
 
-        IResourceBuilder<ProjectResource> platformBlobService = builder.AddProject<Projects.SorteFederation_BlobApi>("sorte-blob-builder")
+        var platformBlobService = builder.AddDotnetProject("sorte-blob-builder", "../ANTSoftFederation.BlobApi/SorteFederation.BlobApi.csproj")
             .WithHttpHealthCheck("/health", endpointName: "http")
             .WithEndpoint("http", delegate (EndpointAnnotation endpoint)
             {
@@ -303,7 +290,7 @@ public static class ApplicationServiceRegistrations
             ;
 
 
-        var designStudioService = builder.AddProject<Projects.SorteFederation_DesignerStudio>("sorte-designer-studio-service")
+        var designStudioService = builder.AddDotnetProject("sorte-designer-studio-service", "../ANTSoftFederation.DesignerStudio/SorteFederation.DesignerStudio.csproj")
                                  .WithEndpoint("http", endpoint =>
                                  {
                                      endpoint.IsProxied = false;
@@ -327,7 +314,7 @@ public static class ApplicationServiceRegistrations
             designStudioService.WithReference(figmaExternalService);
         }
 
-        var gateway = builder.AddProject<Projects.SorteFederation_LoadBalancing>("sorte-gateway")
+        var gateway = builder.AddDotnetProject("sorte-gateway", "../ANTSoftFederation.LoadBalancing/SorteFederation.LoadBalancing.csproj")
                              .WithEndpoint("http", endpoint =>
                              {
                                  endpoint.IsProxied = false;
@@ -346,34 +333,7 @@ public static class ApplicationServiceRegistrations
                              .WithOtlpExporter()
                               ;
 
-        var studio = builder.AddExecutable("sorte-builder-studio", "npm.cmd", "../../clients/AntsoftBuilder", "run", "start:aspire")
-               .WithReference(portalService).WaitFor(portalService)
-               .WithHttpEndpoint(port: 4202, targetPort: 4202, isProxied: false)
-               .WithExternalHttpEndpoints()
-               .ExcludeFromManifest()
-            ;
-
-        var designStudioUi = builder.AddExecutable("sorte-design-studio-ui", "npm.cmd", "../../clients/ANTSoftDesignStudio", "run", "start:aspire")
-               .WithReference(gateway)
-               .WaitFor(gateway)
-               .WithReference(designStudioService)
-               .WaitFor(designStudioService)
-               .WithHttpEndpoint(port: 4203, targetPort: 4203, isProxied: false)
-               .WithExternalHttpEndpoints()
-               .ExcludeFromManifest()
-               ;
-
-        var portalUi = builder.AddExecutable("sorte-portal-ui", "npm.cmd", "../../clients/ANTSoftPortal", "run", "start:aspire")
-              .WithReference(gateway)
-              .WaitFor(gateway)
-              .WithReference(portalService)
-              .WaitFor(portalService)
-              .WithHttpEndpoint(port: 4204, targetPort: 4204, isProxied: false)
-              .WithExternalHttpEndpoints()
-              .ExcludeFromManifest()
-              ;
-
-        builder.AddProject<Projects.SorteFederation_WebSite>("sorte-web-site")
+        builder.AddDotnetProject("sorte-web-site", "../ANTSoftFederation.WebSite/SorteFederation.WebSite.csproj")
                                    .WithEndpoint("http", endpoint =>
                                    {
                                        endpoint.IsProxied = false;
@@ -385,7 +345,7 @@ public static class ApplicationServiceRegistrations
                                    .WithOtlpExporter()
                                    ;
 
-        builder.AddProject<Projects.SorteFederation_PortalWeb>("sorte-portal-web")
+        builder.AddDotnetProject("sorte-portal-web", "../ANTSoftFederation.PortalWeb/SorteFederation.PortalWeb.csproj")
                                     .WithEndpoint("http", endpoint =>
                                     {
                                         endpoint.IsProxied = false;
@@ -396,30 +356,36 @@ public static class ApplicationServiceRegistrations
                                     .WithOtlpExporter()
                                     ;
 
-        /* var options = new DevTunnelOptions
-         {
-             Description = "QA environment tunnel",
-             Labels = ["qa", "testing"],
-             AllowAnonymous = true,
-         };
+        var npmCommand = OperatingSystem.IsWindows() ? "npm.cmd" : "npm";
 
-         if (string.Equals(Environment.GetEnvironmentVariable("SORTE_ENABLE_DEV_TUNNEL"), "true", StringComparison.OrdinalIgnoreCase))
-         {
-             var tunnelId = Guid.CreateVersion7().ToString("N");
-             var tunnel = builder.AddDevTunnel("antsoft-tunnel", options: options);
-             if (string.Equals(Environment.GetEnvironmentVariable("SORTE_ENABLE_DEV_TUNNEL"), "true", StringComparison.OrdinalIgnoreCase))
-             {
-                 tunnel.WithAnonymousAccess();
-             }
+        var studio = builder.AddExecutable("sorte-builder-studio", npmCommand, "../../Clients/AntsoftBuilder", "run", "start:aspire")
+               .WithReference(gateway)
+               .WaitFor(gateway)
+               .WithReference(portalService).WaitFor(portalService)
+               .WithHttpEndpoint(port: 4202, targetPort: 4202, isProxied: false)
+               .WithExternalHttpEndpoints()
+               .ExcludeFromManifest()
+            ;
 
-             tunnel.WithReference(studio).WaitFor(studio);
-             tunnel.WithReference(portalweb).WaitFor(portalweb);
+        var designStudioUi = builder.AddExecutable("sorte-design-studio-ui", npmCommand, "../../Clients/ANTSoftDesignStudio", "run", "start:aspire")
+               .WithReference(gateway)
+               .WaitFor(gateway)
+               .WithReference(designStudioService)
+               .WaitFor(designStudioService)
+               .WithHttpEndpoint(port: 4203, targetPort: 4203, isProxied: false)
+               .WithExternalHttpEndpoints()
+               .ExcludeFromManifest()
+               ;
 
-             tunnel.WithReference(portalApi).WaitFor(portalApi);
-             tunnel.WithReference(portalBuilder).WaitFor(portalBuilder);
-
-             tunnel.WithReference(designStudioService).WaitFor(designStudioService);
-         }*/
+        var portalUi = builder.AddExecutable("sorte-portal-ui", npmCommand, "../../Clients/ANTSoftPortal", "run", "start:aspire")
+              .WithReference(gateway)
+              .WaitFor(gateway)
+              .WithReference(portalService)
+              .WaitFor(portalService)
+              .WithHttpEndpoint(port: 4204, targetPort: 4204, isProxied: false)
+              .WithExternalHttpEndpoints()
+              .ExcludeFromManifest()
+              ;
 
         return builder;
 

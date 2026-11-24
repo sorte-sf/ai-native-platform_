@@ -1,4 +1,6 @@
 
+using SorteFederation.Portal;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();

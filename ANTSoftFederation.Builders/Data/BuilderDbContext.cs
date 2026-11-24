@@ -1,5 +1,4 @@
 
-using SorteFederation.EncryptEFCoreColumn;
 using SorteFederation.Builders.Data.Entities;
 using DefinitionStatus = SorteFederation.Builders.Data.Enums.DefinitionStatus;
 

@@ -1,4 +1,4 @@
-using SorteFederation.AppHost.Bootstraping;
+using SorteFederation.AppHost;
 
 var builder = DistributedApplication.CreateBuilder(args);
 

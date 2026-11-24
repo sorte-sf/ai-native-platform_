@@ -1,7 +1,7 @@
 ﻿
 using Microsoft.AspNetCore.Authorization;
 
-namespace SorteFederation.ANTApplications.Bootstraping;
+namespace SorteFederation.Builders;
 
 public static class ApplicationServiceExtensions
 {
@@ -197,7 +197,8 @@ public static class ApplicationServiceExtensions
                         context.Fail("This application-user session is no longer active.");
                 }
             };
-            });
+        });
+
         builder.Services.AddAuthentication().AddJwtBearer("BuilderWorkspace", options =>
         {
             options.TokenValidationParameters = new TokenValidationParameters

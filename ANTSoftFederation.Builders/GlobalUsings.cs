@@ -45,8 +45,6 @@ global using SorteFederation.Builders.Hubs;
 global using SorteFederation.Builders.Services;
 global using SorteFederation.Shared.TemplateCatalog;
 
-
-global using SorteFederation.ANTApplications.Bootstraping;
 global using SorteFederation.Logger; 
 global using SorteFederation.Builders.Contracts;
 

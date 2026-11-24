@@ -1,4 +1,6 @@
 
+using SorteFederation.Builders;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
@@ -84,19 +86,24 @@ if (!File.Exists(Path.Combine(spaRoot, "index.html")))
 }
 
 builder.WebHost.UseWebRoot(spaRoot);
-builder.Services.AddSpaStaticFiles(configuration => configuration.RootPath = spaRoot);
 
 //builder.Services.AddDbContext<BlobDbContext>(x => x.UseSqlite("DataSource=./LocalData/JobRunners.db")).AddAntiforgery();
 
 
-/*builder.Services.AddHangfire(config => config
-    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-    .UseSimpleAssemblyNameTypeSerializer()
-    .UseRecommendedSerializerSettings()
-//    .UseSQLiteStorage("DataSource=./LocalData/JobRunners.db")
-   );
+if (builder.Environment.IsDevelopment())
+{
+    var hangfireDirectory = Path.Combine(builder.Environment.ContentRootPath, "LocalData");
+    Directory.CreateDirectory(hangfireDirectory);
+    var hangfireDatabase = Path.Combine(hangfireDirectory, "JobRunners.db");
 
-builder.Services.AddHangfireServer(options => options.SchedulePollingInterval = TimeSpan.FromSeconds(1)); */
+    builder.Services.AddHangfire(configuration => configuration
+        .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UseSQLiteStorage($"Data Source={hangfireDatabase};"));
+
+    builder.Services.AddHangfireServer(options => options.SchedulePollingInterval = TimeSpan.FromSeconds(1));
+}
 
 var app = builder.Build();
 
@@ -249,15 +256,17 @@ app.MapOpenApi().CacheOutput();
 
 app.MapLogLevelHandler();
 
+if (app.Environment.IsDevelopment())
+    app.UseHangfireDashboard("/hangfire");
+
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 if (File.Exists(Path.Combine(spaRoot, "index.html")))
 {
-    app.UseSpa(spa =>
-    {
-        spa.ApplicationBuilder.UseStaticFiles();
-        spa.Options.SourcePath = spaRoot;
-    });
+    // Static assets are served by the earlier UseStaticFiles middleware.
+    // Use a fallback endpoint for Angular routes instead of SpaDefaultPageMiddleware,
+    // which can fail when the packaged SPA file provider differs from the web root.
+    app.MapFallbackToFile("index.html");
 }
 else
 {
@@ -265,8 +274,6 @@ else
         "Builder SPA assets were not found at {SpaRoot}; serving API routes without SPA fallback.",
         spaRoot);
 }
-
-// app.UseHangfireDashboard();
 
 app.Run();
 

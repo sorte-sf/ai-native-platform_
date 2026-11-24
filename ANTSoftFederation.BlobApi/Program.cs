@@ -1,5 +1,6 @@
 
-global using SorteFederation.Logger; 
+global using SorteFederation.Logger;
+using SorteFederation.BlobApi;
 
 var builder = WebApplication.CreateBuilder(args);
 

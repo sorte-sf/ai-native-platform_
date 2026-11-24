@@ -52,10 +52,11 @@ app.MapWebhookEndpoints();
 var figgleText = FiggleFonts.Standard.Render(builder.Configuration.GetSection("app:name").Value ?? "Sorte-Gateway");
 app.MapGet("/", ctx => ctx.Response.WriteAsync(figgleText));
 
+app.MapOpenApi();
+
 app.MapScalarApiReference(o =>
 {
     o.DarkMode = true;
-    o.WithTitle("Sorte PAyment API Docs");
     o.WithTitle("Sorte PAyment API Documentation")
                .WithTheme(ScalarTheme.Purple)
                .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);

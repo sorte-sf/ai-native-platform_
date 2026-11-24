@@ -1,6 +1,7 @@
 {
   "appHost": {
-    "path": "ANTSoftFederation.AppHost/SorteFederation.AppHost.csproj"
+    "path": "ANTSoftFederation.AppHost/SorteFederation.AppHost.csproj",
+    "language": "csharp"
   },
   "sdk": {
     "version": "17.0.0"
