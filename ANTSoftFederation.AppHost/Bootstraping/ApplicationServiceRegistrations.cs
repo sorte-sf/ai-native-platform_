@@ -84,7 +84,7 @@ public static class ApplicationServiceRegistrations
             .WithEnvironment("RABBITMQ_DEFAULT_PASSWORD", rabbitPwd)
             .WithDataVolume("sorte-rabbitmq_vol")
             .WithLifetime(ContainerLifetime.Persistent);
-          
+
         var realtimeService = builder.AddDotnetProject("sorte-realtime-service", "../ANTSoftFederation.Realtime/SorteFederation.Realtime.csproj")
             .WithHttpHealthCheck("/health", endpointName: "http")
             .WithEndpoint("http", delegate (EndpointAnnotation endpoint)
@@ -111,7 +111,7 @@ public static class ApplicationServiceRegistrations
           })
           .WithUrlForEndpoint("http", (e) =>
           {
-               return new() { Url = "/scalar", DisplayText = "Payment gateway API Docs." };
+              return new() { Url = "/scalar", DisplayText = "Payment gateway API Docs." };
           })
          .WithEnvironment(delegate (EnvironmentCallbackContext context)
           {
@@ -198,9 +198,9 @@ public static class ApplicationServiceRegistrations
         var platformBuilderService = builder.AddDotnetProject("sorte-portal-builder", "../ANTSoftFederation.Builders/SorteFederation.Builders.csproj")
             .WithHttpHealthCheck("/health", endpointName: "http")
             .WithEndpoint("http", delegate (EndpointAnnotation endpoint)
-        {
-            endpoint.IsProxied = false;
-        }).WithExternalHttpEndpoints()
+            {
+                endpoint.IsProxied = false;
+            }).WithExternalHttpEndpoints()
             .WithUrlForEndpoint("http", url =>
             {
                 url.Url = "/hangfire";
