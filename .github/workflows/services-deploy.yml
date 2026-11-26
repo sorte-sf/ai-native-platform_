@@ -37,18 +37,10 @@ jobs:
             image: sortefederation-paymentgateway
           - project: ANTSoftFederation.Portal/SorteFederation.Portal.csproj
             assembly: SorteFederation.Portal.dll
-            image: sortefederation-portal
-          # Buildable image, but this project is currently commented out in AppHost.
-          - project: ANTSoftFederation.PortalWeb/SorteFederation.PortalWeb.csproj
-            assembly: SorteFederation.PortalWeb.dll
-            image: sortefederation-portalweb
+            image: sortefederation-portal          
           - project: ANTSoftFederation.Realtime/SorteFederation.Realtime.csproj
             assembly: SorteFederation.Realtime.dll
-            image: sortefederation-realtime
-          # AppHost deploys this additional project as "sorte-web-site".
-          #- project: ANTSoftFederation.WebSite/SorteFederation.WebSite.csproj
-          #  assembly: SorteFederation.WebSite.dll
-          #  image: sortefederation-website
+            image: sortefederation-realtime 
 
     steps:
       - uses: actions/checkout@v4
