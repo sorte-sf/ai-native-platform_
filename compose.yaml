@@ -309,53 +309,7 @@ services:
       blob-api: { condition: service_started }
       designer-studio-api: { condition: service_started }
       realtime-api: { condition: service_started }
-
-  website:
-    image: ghcr.io/sorte-sf/sortefederation-website:${IMAGE_TAG:-latest}
-    <<: *api-defaults
-    environment:
-      <<: *api-environment
-      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
-      WEB_DATA_PATH: /data
-    volumes:
-      - website-data:/data
-    ports:
-      - "${WEBSITE_PORT:-9009}:8080"
-    depends_on:
-      cache: { condition: service_healthy }
-
-  portal-web:
-    image: ghcr.io/sorte-sf/sortefederation-portalweb:${IMAGE_TAG:-latest}
-    <<: *api-defaults
-    environment:
-      <<: *api-environment
-      WEB_DATA_PATH: /data
-    volumes:
-      - portal-web-data:/data
-    ports:
-      - "${PORTAL_WEB_PORT:-9008}:8080"
-    depends_on:
-      cache: { condition: service_healthy }
-
-  n8n:
-    image: n8nio/n8n:latest
-    restart: unless-stopped
-    environment:
-      N8N_HOST: 0.0.0.0
-      N8N_PORT: "5678"
-      N8N_PROTOCOL: http
-      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
-      N8N_METRICS: "true"
-      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?Set N8N_ENCRYPTION_KEY in .env}
-      N8N_INSTANCE_OWNER_MANAGED_BY_ENV: "true"
-      N8N_INSTANCE_OWNER_EMAIL: ${N8N_OWNER_EMAIL:?Set N8N_OWNER_EMAIL in .env}
-      N8N_INSTANCE_OWNER_PASSWORD_HASH: ${N8N_OWNER_PASSWORD_HASH:?Set N8N_OWNER_PASSWORD_HASH in .env}
-    ports:
-      - "${N8N_PORT:-5678}:5678"
-    volumes:
-      - n8n-data:/home/node/.n8n
-    networks: [sorte]
-
+ 
 networks:
   sorte:
     name: sorte
@@ -368,9 +322,6 @@ volumes:
   redis-data:
   rabbitmq-data:
   ollama-data:
-  designer-studio-data:
-  website-data:
-  portal-web-data:
-  n8n-data:
+  designer-studio-data: 
   portainer-data:
   pgadmin-data:
